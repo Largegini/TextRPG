@@ -82,15 +82,15 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 void Castle(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 void NecromancerTower(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 
-void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount);
+void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount);
 
 void InitializeObjectPlayer(Object* Player);
 void PlayerScene(Object* Playe);
 
 void InitializeObjectEnemy(Object* Enemy, int EnemyIndex);
-void EnemyScene(Object* Enemy);
+int EnemyScene(Object* Enemy, int EnemyIndex);
 
-void InitializeEquipment(EQUIPMENT* Equipment);
+void InitializeEquipment(EQUIPMENT* Equipment, int EquipmentIndex);
 
 void Battle(Object* Player, Object* Enemy, int EnemyIndex);
 void Status(Object* Player, Object* Enemy, int EnemyIndex);
@@ -122,17 +122,21 @@ int main(void)
 	int Max = 30;
 	Object* Enemy;
 	Enemy = (Object*)malloc(sizeof(Object) * 32);
-	for (int i = 0; i < 30; i++)
+	for (int i = 0; i < Max; i++)
 	{
 		InitializeObjectEnemy(Enemy, i);							//초기화
 	}
 	EQUIPMENT* Equipment;
-	Equipment = (EQUIPMENT*)malloc(sizeof(EQUIPMENT) * 4);
-	InitializeEquipment(Equipment);
+	Equipment = (EQUIPMENT*)malloc(sizeof(EQUIPMENT) * 32);
+
+	for (int i = 0; i < Max; i++)
+	{
+		InitializeEquipment(Equipment,i);
+	}
 
 	// GetTickCount 1/1000부터 점점 증가
-//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
-//int Delay = 1000;
+	//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
+	//int Delay = 1000;
 
 	while (true)
 	{
@@ -322,6 +326,7 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 	case 0:
 		//** 묘지
 		GraveYard(Player, Enemy, Equipment);
+		iStage++;
 		break;
 
 	case 1:
@@ -348,7 +353,7 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 
 	// ** 전투
 	PlayerScene(Player);
-	EnemyScene(Enemy);
+
 
 	// ** 상점
 	// 
@@ -388,7 +393,7 @@ void InitializeObjectPlayer(Object* Player)
 	Player->Info.HP = 100;
 	Player->Info.MP = 10;
 	Player->Info.Att = 10;
-	Player->Info.Def = 10;
+	Player->Info.Def = 5;
 	Player->Info.Speed = 10;
 	Player->Info.Level = 1;
 	Player->Info.EXP = 0;
@@ -410,11 +415,12 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 		Enemy[EnemyIndex].Name = (char*)"쥐";
 		Enemy[EnemyIndex].Info.HP = 10;
 		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
+		Enemy[EnemyIndex].Info.Att = 7;
 		Enemy[EnemyIndex].Info.Def = 5;
 		Enemy[EnemyIndex].Info.Speed = 5;
 		Enemy[EnemyIndex].Info.EXP = 1;
 		break;
+
 	case 1:
 		Enemy[EnemyIndex].Name = (char*)"시민";
 		Enemy[EnemyIndex].Info.HP = 30;
@@ -423,6 +429,7 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 		Enemy[EnemyIndex].Info.Def = 15;
 		Enemy[EnemyIndex].Info.Speed = 5;
 		break;
+
 	case 2:
 		Enemy[EnemyIndex].Name = (char*)"모험가";
 		Enemy[EnemyIndex].Info.HP = 30;
@@ -431,6 +438,7 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 		Enemy[EnemyIndex].Info.Def = 15;
 		Enemy[EnemyIndex].Info.Speed = 5;
 		break;
+
 	case 3:
 		Enemy[EnemyIndex].Name = (char*)"도적";
 		Enemy[EnemyIndex].Info.HP = 30;
@@ -662,37 +670,75 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 
 }
 
-void EnemyScene(Object* Enemy)
+int EnemyScene(Object* Enemy,int EnemyIndex)
 {
+	int Battle = 1;
 
+	// 적 패배
+	if (Enemy[EnemyIndex].Info.HP <= 0)
+	{
+		printf_s("%s을(를) 쓰러뜨렸다!\n", Enemy[EnemyIndex].Name);
+		Sleep(300);
+
+		printf_s("경험치 %d을(를) 얻었다!\n", Enemy[EnemyIndex].Info.EXP);
+		Sleep(300);
+
+		//printf_s("골드 %d을(를) 얻었다!");
+
+		Battle = 0;
+		
+	}
+	return Battle;
 }
 
-void InitializeEquipment(EQUIPMENT* Equipment)
+void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 {
-	for (int i = 0; i < 3; i++)
-	{
-		switch (i)
+	// *****	0 = 검 1 = 도끼 2 = 창 3 = 활
+	// *****	4 = 머리 5 = 상의 6 = 하의 7 = 발 8 = 장갑 9 = 장신구
+		switch (EquipmentIndex)
 		{
 		case 0:
-			Equipment[i].object.Name = (char*)"오래된 검";
-			Equipment[i].Info.Att = 5;
+			Equipment[EquipmentIndex].object.Name = (char*)"오래된 검";
+			Equipment[EquipmentIndex].Info.Att = 5;
+			Equipment[EquipmentIndex].Info.Speed = 0;
 			break;
 		case 1:
-			Equipment[i].object.Name = (char*)"오래된 도끼";
-			Equipment[i].Info.Att = 7;
-			Equipment[i].Info.Speed = -2;
+			Equipment[EquipmentIndex].object.Name = (char*)"오래된 도끼";
+			Equipment[EquipmentIndex].Info.Att = 7;
+			Equipment[EquipmentIndex].Info.Speed = -2;
 			break;
 		case 2:
-			Equipment[i].object.Name = (char*)"오래된 창";
-			Equipment[i].Info.Att = 4;
-			Equipment[i].Info.Speed = 1;
+			Equipment[EquipmentIndex].object.Name = (char*)"오래된 창";
+			Equipment[EquipmentIndex].Info.Att = 4;
+			Equipment[EquipmentIndex].Info.Speed = 1;
 			break;
 		case 3:
-			Equipment[i].object.Name = (char*)"오래된 활";
-			Equipment[i].Info.Att = 5;
+			Equipment[EquipmentIndex].object.Name = (char*)"오래된 활";
+			Equipment[EquipmentIndex].Info.Att = 5;
+			Equipment[EquipmentIndex].Info.Speed = 0;
 			break;
+		case 4:
+			Equipment[EquipmentIndex].object.Name = (char*)"허름한 투구";
+			Equipment[EquipmentIndex].Info.Def = 1;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+		case 5:
+			Equipment[EquipmentIndex].object.Name = (char*)"허름한 갑옷";
+			Equipment[EquipmentIndex].Info.Def = 1;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+		case 6:
+			Equipment[EquipmentIndex].object.Name = (char*)"허름한 각반";
+			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+		case 7:
+			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장화";
+			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+		case 8:
+			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장갑";
+			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+
 		}
-	}
 }
 
 void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
@@ -701,7 +747,24 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 	int iStartWeapon = 0;
 
 	srand(time(NULL));
+	
+	SetColor(12);
 
+	int Width(120 / 2 - (strlen("........................................................................") / 2));
+	int Height = 5;
+
+	SetPosition(Width, Height, (char*)"........................................................................");
+	SetPosition(Width, Height+1, (char*)"..%%%%...%%%%%....%%%%...%%..%%..%%%%%%..%%..%%...%%%%...%%%%%...%%%%%..");
+	SetPosition(Width, Height+2, (char*)".%%......%%..%%..%%..%%..%%..%%..%%.......%%%%...%%..%%..%%..%%..%%..%%.");
+	SetPosition(Width, Height+3, (char*)".%%.%%%..%%%%%...%%%%%%..%%..%%..%%%%......%%....%%%%%%..%%%%%...%%..%%.");
+	SetPosition(Width, Height+4, (char*)".%%..%%..%%..%%..%%..%%...%%%%...%%........%%....%%..%%..%%..%%..%%..%%.");
+	SetPosition(Width, Height+5, (char*)"..%%%%...%%..%%..%%..%%....%%....%%%%%%....%%....%%..%%..%%..%%..%%%%%..");
+	SetPosition(Width, Height+6, (char*)"........................................................................");
+
+	Sleep(1500);
+
+	system("cls");
+	
 	SetColor(15);
 
 	GraveYardBackGround();
@@ -711,36 +774,52 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 
 	GraveYardBackGround();
 
+	//파해쳐진 무덤이미지
 	printf_s("내가 일어난 곳에 뭔가 있는거 같다\n");
 	printf_s("1.가져간다 2.그냥 놔둔다 입력: ");
 	scanf_s("%d", &iChoice);
 	switch (iChoice)
 	{
-	case 1:
-		//시작 장비를 무작위로 부여
-		iStartWeapon = rand() % 4;
-		printf_s("%s를 발견했다!\n", Equipment[iStartWeapon].object.Name);
-		//장비의 공격력을 플레이어 공격력에 더한다
-		Player->Info.Att += Equipment[iStartWeapon].Info.Att;
-		Sleep(500);
+		case 1:
+			GraveYardBackGround();
 
-		GraveYardBackGround();
+			//시작 장비를 무작위로 부여
+			iStartWeapon = rand() % 4;
 
-		printf_s("우선 마을로 가서 정보를 모아야겠어\n");
-		Sleep(500);
+			//장비 이미지
+			printf_s("%s를 발견했다!\n", Equipment[iStartWeapon].object.Name);
 
-		GraveYardBackGround();
-		//던전 0 진행
-		Dungeon(Player, Enemy, 0, 5);
+			//장비의 공격력을 플레이어 공격력에 더한다
+			Player->Info.Att += Equipment[iStartWeapon].Info.Att;
+			Player->Info.Speed += Equipment[iStartWeapon].Info.Speed;
+			Sleep(1000);
 
-		break;
+			GraveYardBackGround();
 
-	default:
-		printf_s("우선 마을로 가서 정보를 모아야겠어\n");
-		break;
-	}
+			printf_s("%s\n우선 마을로 가서 정보를 모아야겠어\n",Player->Name);
+			Sleep(1000);
 
+			GraveYardBackGround();
+			//던전 0 진행
+			Dungeon(Player, Enemy, Equipment, 0, 5);
 
+			break;
+
+		default:
+			printf_s("%s\n우선 마을로 가서 정보를 모아야겠어\n", Player->Name);
+
+			GraveYardBackGround();
+			//던전 0 진행
+			Dungeon(Player, Enemy, Equipment, 0, 5);
+
+			break;
+		}
+
+	iChoice = 0;
+	// 경비병 이미지
+	printf_s("멈추십시오! 못 보던 분이신데...\n");
+	scanf("%d", &iChoice);
+	printf_s("모험가라면 길드에 먼저 등록 하시는게 좋을 겁니다.");
 
 }
 
@@ -748,6 +827,7 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 void GraveYardBackGround()
 {
 	system("cls");
+
 	printf_s("                                                                                            #@@@@                       \n");
 	printf_s("                                                #@@@$                 $@@@@@$               @   $                       \n");
 	printf_s("              $@@@@@@$                          @   @                $@     @@$             @   @                       \n");
@@ -771,6 +851,11 @@ void GraveYardBackGround()
 }
 
 void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
+{
+
+}
+
+void AdventurerVillageBackGround()
 {
 
 }
@@ -832,7 +917,7 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 	{
 		//입력을 받기위한 임의 함수
 		int iChoice = 0;
-		printf_s("몬스터와 조우했다!!\n1.공격\t2.방어\t3.스킬\t4.도망\n입력 : ");
+		printf_s("%s이(가) 나타났다!!\n1.공격\t2.방어\t3.스킬\t4.도망\n입력 : ",Enemy[EnemyIndex].Name);
 		scanf_s("%d", &iChoice);
 
 		//입력받은 값에 따른 전투진행
@@ -849,6 +934,13 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 
 				//플레이어 공격 후 정보창 갱신
 				Status(Player, Enemy, EnemyIndex);
+
+				Battle = EnemyScene(Enemy, EnemyIndex);
+				if (Battle == 0)
+				{
+					InitializeObjectEnemy(Enemy, EnemyIndex);
+					break;
+				}
 
 				//플레이어 공격 후 몬스터의 공격
 				EnemyAttack(Player, Enemy, EnemyIndex);
@@ -926,6 +1018,13 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 				//플레이어 공격 후 정보창 갱신
 				Status(Player, Enemy, EnemyIndex);
 
+				Battle = EnemyScene(Enemy, EnemyIndex);
+				if (Battle == 0)
+				{
+					InitializeObjectEnemy(Enemy, EnemyIndex);
+					break;
+				}
+
 			}
 			break;
 
@@ -990,19 +1089,9 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 			Status(Player, Enemy, EnemyIndex);
 			break;
 		}
-		if (Enemy[EnemyIndex].Info.HP < 0)
-		{
-			printf_s("%s을(를) 쓰러뜨렸다!\n", Enemy[EnemyIndex].Name);
-			Sleep(300);
 
-			printf_s("경험치 %d을(를) 얻었다!\n", Enemy[EnemyIndex].Info.EXP);
-			Sleep(300);
-
-			//printf_s("골드 %d을(를) 얻었다!");
-
-			Battle = 0;
-			InitializeObjectEnemy(Enemy, EnemyIndex);
-		}
+	
+		
 	}
 }
 
@@ -1026,7 +1115,7 @@ void EnemyAttack(Object* Player, Object* Enemy, int EnemyIndex)
 		Player->Info.HP -= 1;
 }
 
-void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount)
+void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount)
 {
 	short Walk = 1;
 	int Loop = 0;
@@ -1036,9 +1125,14 @@ void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount)
 		//** 던전 스테이지 진행
 		if (Loop < EventCount)
 		{
-			DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
+			system("cls");
 
-			int Delay = 1000;
+			//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
+
+			GraveYardBackGround();
+
+			//int Delay = 1000;
+
 			for (int i = 0; i < 3; i++)
 			{
 				printf(".");
@@ -1047,11 +1141,11 @@ void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount)
 
 			// ** 1초마다 실행되는 루프
 			// 처음에는 0+1000 < GetTickCount()
-			if (dwTime + Delay < GetTickCount())
-			{
+			//if (dwTime + Delay < GetTickCount())
+			//{
 				++Loop;
 				//GetTickCount가 1000보다 커졌을때 대입
-				dwTime = GetTickCount(); //dwTime = 1001
+				//dwTime = GetTickCount(); //dwTime = 1001
 
 				//적 조우
 				//** 3번째 조우는 시민
@@ -1060,7 +1154,30 @@ void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount)
 					// 시민을 만났을 때 자신이 언데드라는 걸 알게됨?
 					// 변장을 해야할 필요를 느낌
 					Status(Player, Enemy, 1);
+
+					printf_s("%s\n으아아! 왜 이런 곳에 스켈레톤이?!\n",Enemy[1].Name);
+					Sleep(500);
+
+					system("cls");
 					Battle(Player, Enemy, 1);
+					printf_s("%s\n흐음 이 모습으론 마을에 가면 안 되겠군\n",Player->Name);
+					Sleep(1000);
+
+					GraveYardBackGround();
+
+					printf_s("%s\n미안하지만 빌리도록 하지\n", Player->Name);
+					printf_s("기사의 무덤으로 보이는 곳을 파냈다.");
+
+					GraveYardBackGround();
+
+					//초기 방어구
+					for (int i = 4; i < 9; i++)
+					{
+						printf_s("%s 을(를) 얻었다!", Equipment[i].object.Name);
+						Player->Info.Def += Equipment[i].Info.Def;
+						Sleep(500);
+					}
+					
 				}
 
 				else
@@ -1068,12 +1185,12 @@ void Dungeon(Object* Player, Object* Enemy, int EnemyIndex, int EventCount)
 					Status(Player, Enemy, EnemyIndex);
 					Battle(Player, Enemy, EnemyIndex);
 				}
-
-			}
+			//}
 		}
 
-		else if (Loop > 5)
+		else if (Loop >= EventCount)
 			Walk = 0;
+
 	}
 }
 
