@@ -15,23 +15,22 @@ const int Scene_Menu = 1;
 const int Scene_Stage = 2;
 const int Scene_Exit = 3;
 
-int Check = 1;
-
 // Scene전환을 위해 전역변수로 선언
 int SceneState = 0;
+int iStage = 0;
 
 //구조체안에는 사용자가 사용하고 싶은 것을 넣어서 용도별로 구축한다
 // Status 구조체
 typedef struct tagInfo
 {
+	int Gold;
 
 	int HP;
 	int MP;
-
 	// 도망능력관련된 스탯이며 후에 플레이어와 몬스터의 선공 후공을 결정하기위한 스탯
 	int Speed;
-	int EXP;
 
+	int EXP;
 	short Level;
 
 	float Att;
@@ -43,8 +42,7 @@ typedef struct tagInfo
 typedef struct tagObject
 {
 	char* Name;
-
-
+	int State;
 	INFO Info;
 
 }Object;
@@ -52,45 +50,61 @@ typedef struct tagObject
 typedef struct tagEquipment
 {
 	int Price;
+	int Stock;
 	INFO Info;
 	Object object;
 }EQUIPMENT;
 
+typedef struct tagEffect
+{
+	INFO Info;
+}EFFECT;
+
 typedef struct tagItem
 {
-	int Price;
+	Object Object;
+	EQUIPMENT Equipment;
+	EFFECT Effect;
 }ITEM;
 
 typedef struct tagInventory
 {
-	int Space;
-	int Stock;
-
+	EQUIPMENT Equipment;
+	ITEM item;
+	INFO Info;
 }INVENTORY;
 
 // 함수 전방 선언
 char* SetName();
 
-void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
+void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
 void LogoScene();
 void MenuScene();
-void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
+void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
 
-void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
+void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory);
 void GraveYardBackGround();
-void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
+void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
 void Castle(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 void NecromancerTower(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 
+void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
 void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount);
+void Shop(Object* Player, INVENTORY* Inventory);
+void ShopBackGround();
+void Guild(Object* Player, Object* Quest);
+void InitializeQuest(Object* Quest, int QuestIndex, int Stage);
+void QuestState(Object* Quest, int _Choice);
+void LevelUp(Object* Player);
 
 void InitializeObjectPlayer(Object* Player);
-void PlayerScene(Object* Playe);
+void PlayerScene(Object* Player, INVENTORY* Inventory);
 
 void InitializeObjectEnemy(Object* Enemy, int EnemyIndex);
 int EnemyScene(Object* Enemy, int EnemyIndex);
 
 void InitializeEquipment(EQUIPMENT* Equipment, int EquipmentIndex);
+void InitializeObjectInventory(INVENTORY* Inventory, int ItemIndex);
 
 void Battle(Object* Player, Object* Enemy, int EnemyIndex);
 void Status(Object* Player, Object* Enemy, int EnemyIndex);
@@ -126,14 +140,26 @@ int main(void)
 	{
 		InitializeObjectEnemy(Enemy, i);							//초기화
 	}
+
+	Object* Quest = (Object*)malloc(sizeof(Object)*4);
+	
+
 	EQUIPMENT* Equipment;
 	Equipment = (EQUIPMENT*)malloc(sizeof(EQUIPMENT) * 32);
 
-	for (int i = 0; i < Max; i++)
+	for (int i = 0; i < 9; i++)
 	{
 		InitializeEquipment(Equipment,i);
 	}
 
+	INVENTORY* Inventory;
+	Inventory = (INVENTORY*)malloc(sizeof(INVENTORY)*32);
+	for (int i = 0; i < Max; i++)
+	{
+		InitializeObjectInventory(Inventory, i);							//초기화
+	}
+	
+	
 	// GetTickCount 1/1000부터 점점 증가
 	//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
 	//int Delay = 1000;
@@ -154,7 +180,7 @@ int main(void)
 
 		//** 게임 루프
 		//  함수 SceneManger에 넣어 작동 한다
-		SceneManager(Player, Enemy, Equipment);
+		SceneManager(Player, Enemy, Equipment, Inventory, Quest);
 		//	}
 	}
 	/*
@@ -252,7 +278,7 @@ char* SetName()
 	return pName;
 }
 
-void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment)						// Scene구성
+void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)					// Scene구성
 {
 	switch (SceneState)									//변수에 따라 Scene을 실행하기위한 switch문
 	{
@@ -265,7 +291,7 @@ void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment)						// S
 		break;
 
 	case Scene_Stage:
-		StageScene(Player, Enemy, Equipment);						// StageScene 실행
+		StageScene(Player, Enemy, Equipment, Inventory, Quest);						// StageScene 실행
 		break;
 
 	case Scene_Exit:									//종료
@@ -318,20 +344,28 @@ void MenuScene()
 
 }
 
-void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
+void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
 {
-	int iStage = 0;
+	//테스트용 스킵변수
+	iStage = 1;
+
+	for (int i = 0; i < sizeof(int); i++)
+	{
+		InitializeQuest(Quest, i, iStage);
+	}
+
 	switch (iStage)
 	{
 	case 0:
 		//** 묘지
-		GraveYard(Player, Enemy, Equipment);
+		GraveYard(Player, Enemy, Equipment, Inventory);
 		iStage++;
 		break;
 
 	case 1:
 		// ** 모험가 마을
-		AdventurerVillage(Player, Enemy, Equipment);
+		AdventurerVillage(Player, Enemy, Equipment, Inventory, Quest);
+
 		break;
 
 	case 2:
@@ -352,7 +386,6 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 	//  * * * 각종 오브젝트들의 이동속도 데이터 수집
 
 	// ** 전투
-	PlayerScene(Player);
 
 
 	// ** 상점
@@ -397,12 +430,18 @@ void InitializeObjectPlayer(Object* Player)
 	Player->Info.Speed = 10;
 	Player->Info.Level = 1;
 	Player->Info.EXP = 0;
+	Player->Info.Gold = 0;
 }
 
 
-void PlayerScene(Object* Player)
+void PlayerScene(Object* Player, INVENTORY* Inventory)
 {
-
+	printf_s("아이템명\t가격\t갯수\n");
+	for (int i = 0; i < 1; i++)
+	{
+		if(Inventory[i].Equipment.Stock > 0)
+			printf_s("%d. %s\t\t%d G\t\t%d\n",i+1, Inventory[i].item.Object.Name, Inventory[i].Equipment.Price, Inventory[i].Equipment.Stock);
+	}
 }
 
 
@@ -411,258 +450,264 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 {
 	switch (EnemyIndex)
 	{
-	case 0:
-		Enemy[EnemyIndex].Name = (char*)"쥐";
-		Enemy[EnemyIndex].Info.HP = 10;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 7;
-		Enemy[EnemyIndex].Info.Def = 5;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		Enemy[EnemyIndex].Info.EXP = 1;
-		break;
+		//묘지
+		case 0:
+			Enemy[EnemyIndex].Name = (char*)"쥐";
+			Enemy[EnemyIndex].Info.HP = 10;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 7;
+			Enemy[EnemyIndex].Info.Def = 5;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			Enemy[EnemyIndex].Info.EXP = 1;
+			break;
 
-	case 1:
-		Enemy[EnemyIndex].Name = (char*)"시민";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
+		case 1:
+			Enemy[EnemyIndex].Name = (char*)"신입모험가";
+			Enemy[EnemyIndex].Info.HP = 25;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 10;
+			Enemy[EnemyIndex].Info.Def = 10;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			Enemy[EnemyIndex].Info.EXP = 5;
+			break;
+		//모험가 마을
+			// 소너스 평야
+		case 2:
+			Enemy[EnemyIndex].Name = (char*)"슬라임";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 3:
+			Enemy[EnemyIndex].Name = (char*)"고블린";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 4:
+			Enemy[EnemyIndex].Name = (char*)"모험가";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 5:
+			Enemy[EnemyIndex].Name = (char*)"도적";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 6:
+			Enemy[EnemyIndex].Name = (char*)"고블린전사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 7:
+			Enemy[EnemyIndex].Name = (char*)"고블린투척병";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 8:
+			Enemy[EnemyIndex].Name = (char*)"고블린라이더";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 9:
+			Enemy[EnemyIndex].Name = (char*)"오크";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 10:
+			Enemy[EnemyIndex].Name = (char*)"오크전사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 11:
+			Enemy[EnemyIndex].Name = (char*)"오크주술사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 12:
+			Enemy[EnemyIndex].Name = (char*)"오우거";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
 
-	case 2:
-		Enemy[EnemyIndex].Name = (char*)"모험가";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
+		//왕성
+		case 13:
+			Enemy[EnemyIndex].Name = (char*)"병사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 14:
+			Enemy[EnemyIndex].Name = (char*)"기사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 15:
+			Enemy[EnemyIndex].Name = (char*)"마법사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 16:
+			Enemy[EnemyIndex].Name = (char*)"사제";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 17:
+			Enemy[EnemyIndex].Name = (char*)"성기사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 18:
+			Enemy[EnemyIndex].Name = (char*)"마검사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 19:
+			Enemy[EnemyIndex].Name = (char*)"불의정령";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 20:
+			Enemy[EnemyIndex].Name = (char*)"물의정령";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 21:
+			Enemy[EnemyIndex].Name = (char*)"바람정령";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 22:
+			Enemy[EnemyIndex].Name = (char*)"땅의정령";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 23:
+			Enemy[EnemyIndex].Name = (char*)"정령사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
 
-	case 3:
-		Enemy[EnemyIndex].Name = (char*)"도적";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 4:
-		Enemy[EnemyIndex].Name = (char*)"슬라임";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 5:
-		Enemy[EnemyIndex].Name = (char*)"고블린";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 6:
-		Enemy[EnemyIndex].Name = (char*)"고블린전사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 7:
-		Enemy[EnemyIndex].Name = (char*)"고블린투척병";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 8:
-		Enemy[EnemyIndex].Name = (char*)"고블린라이더";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 9:
-		Enemy[EnemyIndex].Name = (char*)"오크";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 10:
-		Enemy[EnemyIndex].Name = (char*)"오크전사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 11:
-		Enemy[EnemyIndex].Name = (char*)"오크주술사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 12:
-		Enemy[EnemyIndex].Name = (char*)"오우거";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 13:
-		Enemy[EnemyIndex].Name = (char*)"병사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 14:
-		Enemy[EnemyIndex].Name = (char*)"기사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 15:
-		Enemy[EnemyIndex].Name = (char*)"마법사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 16:
-		Enemy[EnemyIndex].Name = (char*)"사제";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 17:
-		Enemy[EnemyIndex].Name = (char*)"성기사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 18:
-		Enemy[EnemyIndex].Name = (char*)"마검사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 19:
-		Enemy[EnemyIndex].Name = (char*)"불의정령";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 20:
-		Enemy[EnemyIndex].Name = (char*)"물의정령";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 21:
-		Enemy[EnemyIndex].Name = (char*)"바람정령";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 22:
-		Enemy[EnemyIndex].Name = (char*)"땅의정령";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 23:
-		Enemy[EnemyIndex].Name = (char*)"정령사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 24:
-		Enemy[EnemyIndex].Name = (char*)"해골";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 25:
-		Enemy[EnemyIndex].Name = (char*)"해골병사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 26:
-		Enemy[EnemyIndex].Name = (char*)"해골궁수";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 27:
-		Enemy[EnemyIndex].Name = (char*)"리치";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 28:
-		Enemy[EnemyIndex].Name = (char*)"좀비";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 29:
-		Enemy[EnemyIndex].Name = (char*)"흑마법사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
-	case 30:
-		Enemy[EnemyIndex].Name = (char*)"사령술사";
-		Enemy[EnemyIndex].Info.HP = 30;
-		Enemy[EnemyIndex].Info.MP = 5;
-		Enemy[EnemyIndex].Info.Att = 5;
-		Enemy[EnemyIndex].Info.Def = 15;
-		Enemy[EnemyIndex].Info.Speed = 5;
-		break;
+		//사령술사의 탑
+		case 24:
+			Enemy[EnemyIndex].Name = (char*)"해골";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 25:
+			Enemy[EnemyIndex].Name = (char*)"해골병사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 26:
+			Enemy[EnemyIndex].Name = (char*)"해골궁수";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 27:
+			Enemy[EnemyIndex].Name = (char*)"리치";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 28:
+			Enemy[EnemyIndex].Name = (char*)"좀비";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 29:
+			Enemy[EnemyIndex].Name = (char*)"흑마법사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
+		case 30:
+			Enemy[EnemyIndex].Name = (char*)"사령술사";
+			Enemy[EnemyIndex].Info.HP = 30;
+			Enemy[EnemyIndex].Info.MP = 5;
+			Enemy[EnemyIndex].Info.Att = 5;
+			Enemy[EnemyIndex].Info.Def = 15;
+			Enemy[EnemyIndex].Info.Speed = 5;
+			break;
 
 
 	}
@@ -721,27 +766,44 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 투구";
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
+			break;
 		case 5:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 갑옷";
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
+			break;
 		case 6:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 각반";
-			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
+			break;
 		case 7:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장화";
-			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
+			break;
 		case 8:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장갑";
-			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
-
+			break;
 		}
 }
 
-void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
+void InitializeObjectInventory(INVENTORY* Inventory, int ItemIndex)
+{
+	switch (ItemIndex)
+	{
+		case 0:
+			Inventory[ItemIndex].item.Object.Name = (char*)"뼛가루";
+			Inventory[ItemIndex].item.Effect.Info.HP = 20;
+			Inventory[ItemIndex].Equipment.Price = 5;
+			Inventory[ItemIndex].Equipment.Stock = 0;
+			break;
+	}
+}
+
+void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory)
 {
 	int iChoice = 0;
 	int iStartWeapon = 0;
@@ -778,6 +840,7 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 	printf_s("내가 일어난 곳에 뭔가 있는거 같다\n");
 	printf_s("1.가져간다 2.그냥 놔둔다 입력: ");
 	scanf_s("%d", &iChoice);
+
 	switch (iChoice)
 	{
 		case 1:
@@ -814,12 +877,30 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 
 			break;
 		}
-
-	iChoice = 0;
+	
 	// 경비병 이미지
-	printf_s("멈추십시오! 못 보던 분이신데...\n");
-	scanf("%d", &iChoice);
-	printf_s("모험가라면 길드에 먼저 등록 하시는게 좋을 겁니다.");
+	system("cls");
+	printf_s("경비병\n\n멈추십시오! 못 보던 분이신데...");
+	Sleep(1000);
+	// 경비병 이미지
+	system("cls");
+	printf_s("%s\n\n ...", Player->Name);
+	Sleep(1000);
+	system("cls");
+	// 경비병 이미지
+	printf_s("경비병\n\n혹시 모험가가 되려고 오신겁니까?");
+	Sleep(1000);
+	system("cls");
+	// 경비병 이미지
+	printf_s("%s\n\n 그렇다", Player->Name);
+	Sleep(1000);
+	system("cls");
+	// 경비병 이미지
+	printf_s("경비병\n\n환영합니다! 이 곳은 모험가들의 마을 솜니움입니다.\n");
+	Sleep(500);
+	printf_s("모험가가 되고싶으면 길드에 먼저 등록 하시면 됩니다.");
+	Sleep(1000);
+	system("cls");
 
 }
 
@@ -850,9 +931,38 @@ void GraveYardBackGround()
 	printf_s("    $@@   $@        #      @            #@$ @           @    $@     $@@@@$        @ @                  @$               \n");
 }
 
-void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
+void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
 {
+	int iSelect = 0;
 
+	while(true)
+	{
+		printf_s("어디로 갈까?\n1.모험가 길드 2.상가 3.공방지구 4.숙소 5.나간다\n입력: ");
+
+		scanf("%d", &iSelect);
+
+		switch (iSelect)
+		{
+			//퀘스트 NPC
+			case 1:
+				Guild(Player, Quest);
+				break;
+			//상점
+			case 2 :
+				Shop(Player, Inventory);
+				break;
+			//제작 & 강화	
+			case 3 :
+				break;
+			//장비 & 가방 & 스텟
+			case 4:
+				break;
+			//던전
+			case 5:
+				DungeonEnterence(Player, Enemy, Equipment, Inventory, Quest);
+				break;
+		}
+	}
 }
 
 void AdventurerVillageBackGround()
@@ -870,7 +980,396 @@ void NecromancerTower(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
 
 }
 
+void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
+{
+	int StageNumber = 0;
 
+	printf_s("어디로 갈까?\n");
+	switch (iStage)
+	{
+		case 1 :
+
+			printf_s("1.소너스 평야\n2.도적단 야영지\n3.고블린취락\n4.오크거주지\n5.오우거야영지\n(6.돌아간다)\n입력 : ");
+
+			scanf("%d", &StageNumber);
+			if (StageNumber > 0 && StageNumber < 6)
+			{
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5);
+			}
+			break;
+
+		case 2 :
+			scanf("%d", &StageNumber);
+			StageNumber += 5;
+			if (StageNumber > 0 && StageNumber < 6)
+			{
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5);
+			}
+			break;
+
+		case 3:
+			scanf("%d", &StageNumber);
+			StageNumber += 15;
+			if (StageNumber > 0 && StageNumber < 6)
+			{
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5);
+			}
+			break;
+	}
+}
+
+void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount)
+{
+	short Walk = 1;
+	int Loop = 0;
+
+	int RandomEnemy = 0;
+
+	srand(time(NULL));
+
+	while (Walk)
+	{
+		switch (iStage)
+		{
+			case 0 :
+			{
+				//** 던전 스테이지 진행
+				if (Loop < EventCount)
+				{
+					system("cls");
+
+					//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
+
+					GraveYardBackGround();
+
+					//int Delay = 1000;
+
+					for (int i = 0; i < 3; i++)
+					{
+						printf(".");
+						Sleep(333);
+					}
+
+					// ** 1초마다 실행되는 루프
+					// 처음에는 0+1000 < GetTickCount()
+					//if (dwTime + Delay < GetTickCount())
+					//{
+						//GetTickCount가 1000보다 커졌을때 대입
+						//dwTime = GetTickCount(); //dwTime = 1001
+
+					++Loop;
+
+					//적 조우
+					//** 3번째 조우는 시민
+					if (Loop == 3)
+					{
+						// 시민을 만났을 때 자신이 언데드라는 걸 알게됨?
+						// 변장을 해야할 필요를 느낌
+						Status(Player, Enemy, 1);
+
+						printf_s("%s\n으아아! 왜 이런 곳에 스켈레톤이?!\n", Enemy[1].Name);
+						Sleep(1000);
+
+						system("cls");
+						Status(Player, Enemy, 1);
+						Battle(Player, Enemy, 1);
+
+						GraveYardBackGround();
+						printf_s("%s\n흐음 이 모습으론 마을에 가면 안 되겠군\n", Player->Name);
+						Sleep(1000);
+
+						GraveYardBackGround();
+
+						printf_s("%s\n미안하지만 빌리도록 하지\n", Player->Name);
+						Sleep(500);
+						printf_s("기사의 무덤으로 보이는 곳을 파냈다.");
+						Sleep(1000);
+
+						GraveYardBackGround();
+
+						//초기 방어구
+						for (int i = 4; i < 9; i++)
+						{
+							printf_s("%s 을(를) 얻었다!\n", Equipment[i].object.Name);
+							Player->Info.Def += Equipment[i].Info.Def;
+							Sleep(500);
+						}
+					}
+
+					else
+					{
+						Status(Player, Enemy, EnemyIndex);
+						Battle(Player, Enemy, EnemyIndex);
+					}
+					//}
+				}
+
+				else if (Loop >= EventCount)
+					Walk = 0;
+
+				break;
+			}
+			case 1:
+			{
+				if (Loop < EventCount)
+				{
+					system("cls");
+
+					for (int i = 0; i < 3; i++)
+					{
+						printf(".");
+						Sleep(333);
+					}
+
+					++Loop;
+
+					Status(Player, Enemy, EnemyIndex);
+					Battle(Player, Enemy, EnemyIndex);
+				}
+
+				else if (Loop >= EventCount)
+					Walk = 0;
+
+				break;
+			}
+		}
+	}
+		
+}
+
+void Guild(Object* Player, Object* Quest)
+{
+	int iChoice = 0;
+	int QChoice = 0;
+
+	int Continue = 1;
+
+	//접수원 이미지
+	printf_s("어서오세요!\n");
+	printf_s("이 곳은 모험가 길드입니다.\n");
+	printf_s("의뢰를 받거나 모험가 등급을 올릴 수 있어요\n");
+	//접수원 이미지
+	
+	while (Continue)
+	{
+		printf_s("1.의뢰\t2.승급\t3.등급 조회\t4.돌아간다\n입력 :");
+		scanf("%d", &iChoice);
+
+		switch (iChoice)
+		{
+			
+			case 1 :
+			//퀘스트목록
+				
+				// 1 = 진행중 2 = 완료
+				for (int i = 0; i < 1; i++)
+				{
+					printf_s("No %d. %s\n", i + 1, Quest[i].Name);
+				}
+
+				printf_s("수락할 의뢰의 번호를 입력 해주세요(4 : 돌아간다)\n입력 : ");
+				scanf("%d", &QChoice);
+
+				QuestState(Quest, QChoice);
+
+				break;
+			
+			case 2 :
+			//모험가 등급(level)
+				//테스트용 경험치
+				Player->Info.EXP = 100;
+
+				LevelUp(Player);
+				break;
+
+			case 3 :
+				printf_s("현재 플레이어의 등급은 %d 입니다.\n", Player->Info.Level);
+				Sleep(1000);
+				break;
+
+			case 4 :
+				printf_s("항상 수고많으세요 또 오세요!\n");
+				Continue = 0;
+				break;
+		}
+	}
+}
+
+void InitializeQuest(Object* Quest, int QuestIndex, int Stage)
+{
+	if (Stage == 1)
+	{
+		switch (QuestIndex)
+		{
+			case 0 :
+				Quest[QuestIndex].Name = (char*)"오우거 처치";
+				Quest[QuestIndex].State = 0;
+				break;
+			
+		}
+	}
+}
+
+void QuestState(Object* Quest, int _Choice)
+{
+	
+
+	switch (_Choice)
+	{
+		case 1:
+			//수락
+			Quest[_Choice-1].Name = (char*)"오우거 처치(진행중)";
+			Quest[_Choice-1].State = 1;
+
+	}
+			//완료
+}
+
+void LevelUp(Object* Player)
+{
+	int iAgree = 0;
+
+	int iNeedEXP[16];
+
+	for (int i = 0; i < 16; i++)
+	{
+		if (i == 0)
+			iNeedEXP[i] = 10;
+
+		else
+			iNeedEXP[i] = iNeedEXP[i-1] * 2;
+
+	}
+
+	printf_s("현재 플레이어의 등급은 %d 입니다.\n", Player->Info.Level);
+	Sleep(500);
+	printf_s("승급까지 %d EXP필요합니다.\n", iNeedEXP[Player->Info.Level - 1]);
+	Sleep(500);
+	printf_s("승급하시겠습니까?(1.예 2.아니요)\n보유EXP : %d\n입력 : ", Player->Info.EXP);
+	scanf("%d", &iAgree);
+
+	if (iAgree == 1)
+	{
+		//	2Level부터 올라가기위해 필요한 경험치가 iNeed[0]부터 저장 되어있기 때문에
+		//	플레이어 현재 Level에서 1을 빼면 된다.
+		Player->Info.EXP -= iNeedEXP[Player->Info.Level - 1];
+		Player->Info.Level++;
+
+		printf_s("모험가등급이 %d로 올랐다!!\n", Player->Info.Level);
+
+	}
+}
+
+void Shop(Object* Player, INVENTORY* Inventory)
+{
+	int iIndex = 0;
+	int iPurchase = 0;
+	int iPNumber = 0;
+	int iSell = 0;
+	int iSNumber = 0;
+	int Continue = 1;
+
+	while (Continue)
+	{
+
+		ShopBackGround();
+		printf_s("어서오시게\n1.산다\t2.판다\t3.돌아간다\n입력 : ");
+		scanf("%d", &iIndex);
+
+		switch (iIndex)
+		{
+			case 1:
+				//상점물건목록
+				for (int i = 0; i < 1; i++)
+				{
+					printf_s("아이템명\t가격\n");
+					printf_s("%d. %s\t\t%d G\n", i + 1, Inventory[i].item.Object.Name, Inventory[i].Equipment.Price);
+					
+				}
+				printf_s("보유금액 : %d\n", Player->Info.Gold);
+
+				printf_s("구매하고 싶은 항목의 번호를 입력하십시오 : ");
+				scanf("%d", &iPurchase);
+
+				if (Inventory[iPurchase - 1].Equipment.Stock < 0)
+				{
+					printf_s("없는 항목 입니다!\n");
+				}
+
+				else
+				{
+					printf_s("몇 개 구매하시겠습니까?(보유중:%d) : ", Inventory[iPurchase-1].Equipment.Stock);
+					scanf("%d", &iPNumber);
+
+					if (Player->Info.Gold < (Inventory[iPurchase - 1].Equipment.Price * iPNumber))
+					{
+						printf_s("Gold가 부족합니다.\n");
+					}
+
+					else
+					{
+						printf_s("%s을(를) %d개 구입했다.\n", Inventory[iPurchase - 1].item.Object.Name, iPNumber);
+						Sleep(500);
+
+						printf_s("%d Gold를 지불했다\n", Inventory[iPurchase - 1].Equipment.Price * iPNumber);
+						Inventory[iPurchase-1].Equipment.Stock += iPNumber;
+						Player->Info.Gold -= Inventory[iPurchase-1].Equipment.Price * iPNumber;
+						Sleep(1000);
+					}
+				}
+
+				break;
+
+			case 2:
+				
+				//플레이어 물건목록
+				PlayerScene(Player, Inventory);
+				printf_s("보유금액 : %d\n", Player->Info.Gold);
+
+				printf_s("판매하고 싶은 항목의 번호를 입력하십시오 : ");
+				scanf("%d", &iSell);
+
+				if (Inventory[iSell - 1].Equipment.Stock < 0)
+				{
+					printf_s("없는 항목입니다!\n");
+				}
+
+				else
+				{
+					printf_s("몇 개 판매하시겠습니까?(보유중:%d) : ", Inventory[iSell-1].Equipment.Stock);
+					scanf("%d", &iSNumber);
+
+					if (Inventory[iSell - 1].Equipment.Stock < iSNumber)
+					{
+						printf_s("가진 것보다 많이 팔 수 없습니다!\n");
+					}
+
+					else
+					{
+						printf_s("%s을(를) %d개 판매했다.\n", Inventory[iSell - 1].item.Object.Name, iSNumber);
+						Sleep(500);
+						printf_s("%d Gold를 얻었다\n", Inventory[iSell - 1].Equipment.Price * iSNumber);
+						Inventory[iSell-1].Equipment.Stock -= iSNumber;
+						Player->Info.Gold += Inventory[iSell-1].Equipment.Price * iSNumber;
+						Sleep(1000);
+					}
+
+				}
+				break;
+				
+			case 3:
+				printf_s("고맙네! 또 오시게!\n");
+				Continue = 0;
+				break;
+			}
+		}
+		
+}
+
+void ShopBackGround()
+{
+
+}
 
 void Status(Object* Player, Object* Enemy, int EnemyIndex)
 {
@@ -911,13 +1410,13 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 {
 	// 전투 반복을 위한 함수
 	short Battle = 1;
-
+	printf_s("%s이(가) 나타났다!!\n",Enemy[EnemyIndex].Name);
 	//전투
 	while (Battle)
 	{
 		//입력을 받기위한 임의 함수
 		int iChoice = 0;
-		printf_s("%s이(가) 나타났다!!\n1.공격\t2.방어\t3.스킬\t4.도망\n입력 : ",Enemy[EnemyIndex].Name);
+		printf("1.공격\t2.방어\t3.스킬\t4.아이템\t4.도망\n입력 : ");
 		scanf_s("%d", &iChoice);
 
 		//입력받은 값에 따른 전투진행
@@ -1027,9 +1526,11 @@ void Battle(Object* Player, Object* Enemy, int EnemyIndex)
 
 			}
 			break;
+			//전투 중 아이템 사용
+		case 4:
 
 			//도망을 선택했을 때
-		case 4:
+		case 5:
 
 			//플레이어의 Speed 가 적보다 높을 때 도망칠수 있게 함
 			if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
@@ -1110,89 +1611,12 @@ void EnemyAttack(Object* Player, Object* Enemy, int EnemyIndex)
 {
 	printf_s("몬스터의 공격!!\n");
 	if (Enemy[EnemyIndex].Info.Att > Player->Info.Def)
-		Enemy[EnemyIndex].Info.HP -= (int)(Enemy[EnemyIndex].Info.Att - Player->Info.Def);
+		Player->Info.HP -= (int)(Enemy[EnemyIndex].Info.Att - Player->Info.Def);
 	else
 		Player->Info.HP -= 1;
 }
 
-void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount)
-{
-	short Walk = 1;
-	int Loop = 0;
-	while (Walk)
 
-	{
-		//** 던전 스테이지 진행
-		if (Loop < EventCount)
-		{
-			system("cls");
-
-			//DWORD dwTime = GetTickCount(); // typedef unsigned long DWORD
-
-			GraveYardBackGround();
-
-			//int Delay = 1000;
-
-			for (int i = 0; i < 3; i++)
-			{
-				printf(".");
-				Sleep(333);
-			}
-
-			// ** 1초마다 실행되는 루프
-			// 처음에는 0+1000 < GetTickCount()
-			//if (dwTime + Delay < GetTickCount())
-			//{
-				++Loop;
-				//GetTickCount가 1000보다 커졌을때 대입
-				//dwTime = GetTickCount(); //dwTime = 1001
-
-				//적 조우
-				//** 3번째 조우는 시민
-				if (Loop == 3)
-				{
-					// 시민을 만났을 때 자신이 언데드라는 걸 알게됨?
-					// 변장을 해야할 필요를 느낌
-					Status(Player, Enemy, 1);
-
-					printf_s("%s\n으아아! 왜 이런 곳에 스켈레톤이?!\n",Enemy[1].Name);
-					Sleep(500);
-
-					system("cls");
-					Battle(Player, Enemy, 1);
-					printf_s("%s\n흐음 이 모습으론 마을에 가면 안 되겠군\n",Player->Name);
-					Sleep(1000);
-
-					GraveYardBackGround();
-
-					printf_s("%s\n미안하지만 빌리도록 하지\n", Player->Name);
-					printf_s("기사의 무덤으로 보이는 곳을 파냈다.");
-
-					GraveYardBackGround();
-
-					//초기 방어구
-					for (int i = 4; i < 9; i++)
-					{
-						printf_s("%s 을(를) 얻었다!", Equipment[i].object.Name);
-						Player->Info.Def += Equipment[i].Info.Def;
-						Sleep(500);
-					}
-					
-				}
-
-				else
-				{
-					Status(Player, Enemy, EnemyIndex);
-					Battle(Player, Enemy, EnemyIndex);
-				}
-			//}
-		}
-
-		else if (Loop >= EventCount)
-			Walk = 0;
-
-	}
-}
 
 void SetPosition(int _x, int _y, char* _str, int _Color)
 {
