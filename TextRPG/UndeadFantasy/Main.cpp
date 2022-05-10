@@ -117,7 +117,7 @@ void InitializeObjectInventory(INVENTORY* Inventory, int ItemIndex);
 
 short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest);
 void Status(Object* Player, Object* Enemy, int EnemyIndex);
-void PlayerStatus(Object* Player);
+void PlayerStatus(Object* Player, int State);
 void EnemyStatus(Object* Enemy, int EnemyIndex);
 void PlayerAttack(Object* Player, Object* Enemy, int EnemyIndex);
 void EnemyAttack(Object* Player, Object* Enemy, int EnamyIndex);
@@ -997,6 +997,9 @@ void GraveYardBackGround()
 void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
 {
 	int iSelect = 0;
+
+	int Village = 1;
+
 	Player->Name = SetName();
 
 	while(iStage == 1)
@@ -1004,8 +1007,6 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 		printf_s("어디로 갈까?\n1.모험가 길드 2.상가 3.공방지구 4.숙소 5.마을 밖으로 간다\n입력: ");
 
 		scanf("%d", &iSelect);
-
-		printf_s("%d\n%d", Player->Info.Gold, Player->Info.EXP);
 
 		switch (iSelect)
 		{
@@ -1023,6 +1024,15 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 				break;
 			//소지 장비 & 소지 아이템 & 현재 스텟 조회
 			case 4:
+				PlayerStatus(Player, Village);
+				for (int i = 0; i < 3; i++)
+				{
+					for (int j = 0; j < 10; j++)
+					{
+						if (Equipment[j + (i * 10)].object.State == 1)
+							printf_s("%s", Equipment[j + (i * 10)].object.Name);
+					}
+				}
 				break;
 			//던전
 			case 5:
@@ -1554,46 +1564,57 @@ void Forge(Object* Player, EQUIPMENT* Equipment)
 	printf("Gold만 주면 장비를 더 멋지게 만들어 드리리다!\n");
 	//  일의 자리가 0~3무기 4모자 5상의 6하의 7신발 8 장갑
 	// 0검 1 도끼 2 창 3 활
-	printf("어느 장비를 강화하시겠습니까?\n1.무기\n2.모자\n3.상의\n4.하의\n5.신발\n6.장갑");
+	printf("어느 장비를 강화하시겠습니까?\n1.무기\n2.모자\n3.상의\n4.하의\n5.신발\n6.장갑\n입력 : ");
 	scanf("%d", &SelectParts);
 
-	switch (SelectParts)
-	{
-		case 1:
-			for(int i=0; i<4;i++)
+		if (SelectParts == 1)
+		{
+			for (int i = 0; i < 4; i++)
 			{
 				if (Equipment[i].object.State == 1)
 				{
 					Reinforce(Player, Equipment, i);
 				}
 			}
-			break;
-		case 2:
-		default :
-			break;
-	}
+		}
+
+		else if (SelectParts<7 && SelectParts >1)
+			Reinforce(Player, Equipment, SelectParts + 2);
 }
 
 void Status(Object* Player, Object* Enemy, int EnemyIndex)
 {
+	int Battle = 0;
 	system("cls");
 	EnemyStatus(Enemy, EnemyIndex);
 
 	printf_s("\n\n");
 
-	PlayerStatus(Player);
+	PlayerStatus(Player, Battle);
 }
 
-void PlayerStatus(Object* Player)
+void PlayerStatus(Object* Player, int State)
 {
 	//플레이어의 정보를 출력
-	printf_s("[Player] : %s\n", Player->Name);
-	printf_s("HP : %d\n", Player->Info.HP);
-	printf_s("MP : %d\n", Player->Info.MP);
-	//printf_s("공격력 : %.2f\n", Player->Info.Att);
-	//printf_s("방어력 : %.2f\n", Player->Info.Def);
-	//printf_s("레벨 : %d\n", Player->Info.Level);
-	//printf_s("경험치 : %d\n", Player->Info.EXP);
+	if (State == 0)
+	{
+		printf_s("[Player] : %s\n", Player->Name);
+		printf_s("HP : %d\n", Player->Info.HP);
+		printf_s("MP : %d\n", Player->Info.MP);
+	}
+
+	else if (State ==1)
+	{
+		printf_s("[Player] : %s\n", Player->Name);
+		printf_s("HP : %d\n", Player->Info.HP);
+		printf_s("MP : %d\n", Player->Info.MP);
+		printf_s("공격력 : %.2f\n", Player->Info.Att);
+		printf_s("방어력 : %.2f\n", Player->Info.Def);
+		printf_s("민첩 : %d\n", Player->Info.Speed);
+		printf_s("레벨 : %d\n", Player->Info.Level);
+		printf_s("경험치 : %d\n", Player->Info.EXP);
+		printf_s("Gold : %d\n", Player->Info.Gold);
+	}
 }
 
 void EnemyStatus(Object* Enemy, int EnemyIndex)
@@ -1899,7 +1920,7 @@ void Reinforce(Object* Player, EQUIPMENT* Equipment, int EquipmentID)
 	int iAgree = 0;
 
 	printf_s("%s를 강화 하겠나?\n", Equipment[EquipmentID].object.Name);
-	printf_s("%d Gold필요하네(1.예 2.아니요)",Equipment[EquipmentID].Info.Gold);
+	printf_s("%d Gold필요하네(1.예 2.아니요) : ",Equipment[EquipmentID].Info.Gold);
 	scanf(" %d", &iAgree);
 
 	if (iAgree == 1)
@@ -1908,6 +1929,7 @@ void Reinforce(Object* Player, EQUIPMENT* Equipment, int EquipmentID)
 		Equip(Player, Equipment, EquipmentID + 10);
 		Player->Info.Gold -= Equipment[EquipmentID].Info.Gold;
 	}
+
 }
 
 short GameOver()
