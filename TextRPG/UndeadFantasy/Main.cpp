@@ -26,7 +26,9 @@ typedef struct tagInfo
 	int Gold;
 
 	int HP;
+	int MaxHP;
 	int MP;
+	int MaxMP;
 	// 도망능력관련된 스탯이며 후에 플레이어와 몬스터의 선공 후공을 결정하기위한 스탯
 	int Speed;
 
@@ -82,22 +84,38 @@ typedef struct tagInventory
 	INFO Info;
 }INVENTORY;
 
+typedef struct tagSkill
+{
+	int Type;
+	int Cost;
+
+	float Damege;
+
+	Object object;
+	
+}SKILL;
+
+typedef struct tagPlayerSkill
+{
+	SKILL Skill;
+}PLAYERSKILL;
+
 // 함수 전방 선언
 char* SetName();
 
-void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
+void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill);
 void LogoScene();
 void MenuScene();
-void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
+void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill);
 
 void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory);
 void GraveYardBackGround();
-void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
+void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill,PLAYERSKILL* PlayerSkill);
 void Castle(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 void NecromancerTower(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 
 void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest);
-void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest);
+void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest, INVENTORY* Inventory);
 void Shop(Object* Player, INVENTORY* Inventory);
 void ShopBackGround();
 void Guild(Object* Player, Object* Quest, Object* Enemy, EQUIPMENT* Equipment);
@@ -105,6 +123,7 @@ void InitializeQuest(Object* Quest, int QuestIndex, int Stage);
 void QuestState(Object* Quest, Object* Enemy, int _Choice);
 void LevelUp(Object* Player, EQUIPMENT* Equipment);
 void Forge(Object* Player, EQUIPMENT* Equipment);
+void Training(Object* Player, EQUIPMENT* Equipment, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill);
 
 void InitializeObjectPlayer(Object* Player);
 void PlayerScene(Object* Player, INVENTORY* Inventory);
@@ -114,8 +133,9 @@ int EnemyScene(Object* Enemy, int EnemyIndex);
 
 void InitializeEquipment(EQUIPMENT* Equipment, int EquipmentIndex);
 void InitializeObjectInventory(INVENTORY* Inventory, int ItemIndex);
+void InitializeSkill(SKILL* Skill, int SkillNum);
 
-short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest);
+short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVENTORY* Inventory);
 void Status(Object* Player, Object* Enemy, int EnemyIndex);
 void PlayerStatus(Object* Player, int State);
 void EnemyStatus(Object* Enemy, int EnemyIndex);
@@ -171,6 +191,15 @@ int main(void)
 		InitializeObjectInventory(Inventory, i);							//초기화
 	}
 
+	SKILL* Skill;
+	Skill = (SKILL*)malloc(sizeof(SKILL)*16);
+	for (int i = 0; i < Max; i++)
+	{
+		InitializeSkill(Skill, i);							
+	}
+
+	PLAYERSKILL* PlayerSkill = (PLAYERSKILL*)malloc(sizeof(PLAYERSKILL) * 4);
+
 	while (true)
 	{
 			//콘솔창에 있는 모든내용을 지움
@@ -178,7 +207,7 @@ int main(void)
 
 		//** 게임 루프
 		//  함수 SceneManger에 넣어 작동 한다
-		SceneManager(Player, Enemy, Equipment, Inventory, Quest);
+		SceneManager(Player, Enemy, Equipment, Inventory, Quest,Skill, PlayerSkill);
 	}
 
 	return 0;
@@ -214,7 +243,7 @@ char* SetName()
 }
 
 // Scene구성
-void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)					
+void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL * Skill, PLAYERSKILL* PlayerSkill)					
 {
 	switch (SceneState)									//변수에 따라 Scene을 실행하기위한 switch문
 	{
@@ -227,7 +256,7 @@ void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY
 		break;
 
 	case Scene_Stage:
-		StageScene(Player, Enemy, Equipment, Inventory, Quest);						// StageScene 실행
+		StageScene(Player, Enemy, Equipment, Inventory, Quest, Skill, PlayerSkill);						// StageScene 실행
 		break;
 
 	case Scene_Exit:									//종료
@@ -280,7 +309,7 @@ void MenuScene()
 
 }
 
-void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
+void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill)
 {
 	//테스트용 스킵변수
 	iStage = 1;
@@ -301,7 +330,7 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* 
 
 	case 1:
 		// ** 모험가 마을
-		AdventurerVillage(Player, Enemy, Equipment, Inventory, Quest);
+		AdventurerVillage(Player, Enemy, Equipment, Inventory, Quest, Skill, PlayerSkill);
 
 		break;
 
@@ -329,7 +358,9 @@ void InitializeObjectPlayer(Object* Player)
 	//PLAYER의 객체 정보를 초기화한다
 
 	Player->Info.HP = 100;
+	Player->Info.MaxHP = 100;
 	Player->Info.MP = 10;
+	Player->Info.MaxMP = 10;
 	Player->Info.Att = 10;
 	Player->Info.Def = 5;
 	Player->Info.Speed = 10;
@@ -659,8 +690,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 		{
 		case 0:
 			Equipment[EquipmentIndex].object.Name = (char*)"오래된 검";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 5;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -669,8 +700,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 1:
 			Equipment[EquipmentIndex].object.Name = (char*)"오래된 도끼";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 7;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = -2;
@@ -679,8 +710,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 2:
 			Equipment[EquipmentIndex].object.Name = (char*)"오래된 창";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 4;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = 1;
@@ -689,8 +720,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 3:
 			Equipment[EquipmentIndex].object.Name = (char*)"오래된 활";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 5;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -699,8 +730,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 4:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 투구";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -709,8 +740,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 5:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 갑옷";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -719,8 +750,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 6:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 각반";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -729,8 +760,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 7:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장화";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -739,8 +770,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 8:
 			Equipment[EquipmentIndex].object.Name = (char*)"허름한 장갑";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 1;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -749,8 +780,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 9 :
 			Equipment[EquipmentIndex].object.Name = (char*)"견습 모험가의 징표";
-			Equipment[EquipmentIndex].Info.HP = 50;
-			Equipment[EquipmentIndex].Info.MP = 25;
+			Equipment[EquipmentIndex].Info.MaxHP = 50;
+			Equipment[EquipmentIndex].Info.MaxMP = 25;
 			Equipment[EquipmentIndex].Info.Att= 2;
 			Equipment[EquipmentIndex].Info.Def = 2;
 			Equipment[EquipmentIndex].Info.Speed = 0; 
@@ -758,8 +789,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 10:
 			Equipment[EquipmentIndex].object.Name = (char*)"철제 검";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 15;
 			Equipment[EquipmentIndex].Info.Def = 2;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -768,8 +799,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 11:
 			Equipment[EquipmentIndex].object.Name = (char*)"쇠도끼";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 17;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = -3;
@@ -778,8 +809,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 12:
 			Equipment[EquipmentIndex].object.Name = (char*)"장창";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 14;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = 2;
@@ -788,8 +819,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 13:
 			Equipment[EquipmentIndex].object.Name = (char*)"단궁";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 16;
 			Equipment[EquipmentIndex].Info.Def = 0;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -798,8 +829,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 14:
 			Equipment[EquipmentIndex].object.Name = (char*)"가죽 투구";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 4;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -808,8 +839,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 15:
 			Equipment[EquipmentIndex].object.Name = (char*)"가죽 갑옷";
-			Equipment[EquipmentIndex].Info.HP = 10;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 10;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 5;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -818,8 +849,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 16:
 			Equipment[EquipmentIndex].object.Name = (char*)"가죽 각반";
-			Equipment[EquipmentIndex].Info.HP = 10;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 10;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 5;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -828,8 +859,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 17:
 			Equipment[EquipmentIndex].object.Name = (char*)"가죽 장화";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 0;
 			Equipment[EquipmentIndex].Info.Def = 2;
 			Equipment[EquipmentIndex].Info.Speed = 1;
@@ -838,8 +869,8 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 18:
 			Equipment[EquipmentIndex].object.Name = (char*)"가죽 장갑";
-			Equipment[EquipmentIndex].Info.HP = 0;
-			Equipment[EquipmentIndex].Info.MP = 0;
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
 			Equipment[EquipmentIndex].Info.Att = 1;
 			Equipment[EquipmentIndex].Info.Def = 2;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -848,8 +879,107 @@ void InitializeEquipment(EQUIPMENT* Equipment,int EquipmentIndex)
 			break;
 		case 19:
 			Equipment[EquipmentIndex].object.Name = (char*)"모험가의 징표";
-			Equipment[EquipmentIndex].Info.HP = 50;
-			Equipment[EquipmentIndex].Info.MP = 25;
+			Equipment[EquipmentIndex].Info.MaxHP = 50;
+			Equipment[EquipmentIndex].Info.MaxMP = 25;
+			Equipment[EquipmentIndex].Info.Att = 2;
+			Equipment[EquipmentIndex].Info.Def = 2;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 20:
+			Equipment[EquipmentIndex].object.Name = (char*)"강철 검";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 15;
+			Equipment[EquipmentIndex].Info.Def = 2;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 200;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 21:
+			Equipment[EquipmentIndex].object.Name = (char*)"강철 도끼";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 17;
+			Equipment[EquipmentIndex].Info.Def = 0;
+			Equipment[EquipmentIndex].Info.Speed = -3;
+			Equipment[EquipmentIndex].Info.Gold = 200;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 22:
+			Equipment[EquipmentIndex].object.Name = (char*)"강철 창";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 14;
+			Equipment[EquipmentIndex].Info.Def = 0;
+			Equipment[EquipmentIndex].Info.Speed = 2;
+			Equipment[EquipmentIndex].Info.Gold = 200;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 23:
+			Equipment[EquipmentIndex].object.Name = (char*)"합성 단궁";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 16;
+			Equipment[EquipmentIndex].Info.Def = 0;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 200;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 24:
+			Equipment[EquipmentIndex].object.Name = (char*)"판금 투구";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 0;
+			Equipment[EquipmentIndex].Info.Def = 4;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 90;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 25:
+			Equipment[EquipmentIndex].object.Name = (char*)"판금 갑옷";
+			Equipment[EquipmentIndex].Info.MaxHP = 10;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 0;
+			Equipment[EquipmentIndex].Info.Def = 5;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 90;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 26:
+			Equipment[EquipmentIndex].object.Name = (char*)"판금 각반";
+			Equipment[EquipmentIndex].Info.MaxHP = 10;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 0;
+			Equipment[EquipmentIndex].Info.Def = 5;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 90;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 27:
+			Equipment[EquipmentIndex].object.Name = (char*)"판금 장화";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 0;
+			Equipment[EquipmentIndex].Info.Def = 2;
+			Equipment[EquipmentIndex].Info.Speed = 1;
+			Equipment[EquipmentIndex].Info.Gold = 90;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 28:
+			Equipment[EquipmentIndex].object.Name = (char*)"판금 장갑";
+			Equipment[EquipmentIndex].Info.MaxHP = 0;
+			Equipment[EquipmentIndex].Info.MaxMP = 0;
+			Equipment[EquipmentIndex].Info.Att = 1;
+			Equipment[EquipmentIndex].Info.Def = 2;
+			Equipment[EquipmentIndex].Info.Speed = 0;
+			Equipment[EquipmentIndex].Info.Gold = 90;
+			Equipment[EquipmentIndex].object.State = 0;
+			break;
+		case 29:
+			Equipment[EquipmentIndex].object.Name = (char*)"숙련 모험가의 징표";
+			Equipment[EquipmentIndex].Info.MaxHP = 50;
+			Equipment[EquipmentIndex].Info.MaxMP = 25;
 			Equipment[EquipmentIndex].Info.Att = 2;
 			Equipment[EquipmentIndex].Info.Def = 2;
 			Equipment[EquipmentIndex].Info.Speed = 0;
@@ -865,10 +995,146 @@ void InitializeObjectInventory(INVENTORY* Inventory, int ItemIndex)
 		case 0:
 			Inventory[ItemIndex].item.Object.Name = (char*)"뼛가루";
 			Inventory[ItemIndex].item.Effect.Info.HP = 20;
+			Inventory[ItemIndex].item.Effect.Info.MP = 0;
 			Inventory[ItemIndex].Equipment.Price = 5;
 			Inventory[ItemIndex].Equipment.Stock = 0;
 			break;
+
+		case 1:
+			Inventory[ItemIndex].item.Object.Name = (char*)"마력의 이슬";
+			Inventory[ItemIndex].item.Effect.Info.HP = 0;
+			Inventory[ItemIndex].item.Effect.Info.MP = 10;
+			Inventory[ItemIndex].Equipment.Price = 3;
+			Inventory[ItemIndex].Equipment.Stock = 0;
+			break;
 	}
+}
+
+void InitializeSkill(SKILL* Skill, int SkillNum)
+{
+	// 0 = 공격력기반 1 = 상대 최대체력 기반 2 = 속도기반 3 = 상대 현재체력 기반  
+	switch (SkillNum)
+	{
+		case 0:
+			Skill[SkillNum].object.Name = (char*)"마력 베기";
+			Skill[SkillNum].Damege = 1.2f;
+			Skill[SkillNum].Cost = 10;
+			Skill[SkillNum].Type = SkillNum%4;
+		break;
+
+		case 1:
+			Skill[SkillNum].object.Name = (char*)"쪼개버린다 널!";
+			Skill[SkillNum].Damege = 1.2f;
+			Skill[SkillNum].Cost = 10;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 2:
+			Skill[SkillNum].object.Name = (char*)"진격 찌르기";
+			Skill[SkillNum].Damege = 1.2f;
+			Skill[SkillNum].Cost = 10;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 3:
+			Skill[SkillNum].object.Name = (char*)"마력 화살";
+			Skill[SkillNum].Damege = 1.2f;
+			Skill[SkillNum].Cost = 10;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 4:
+			Skill[SkillNum].object.Name = (char*)"회전 베기";
+			Skill[SkillNum].Damege = 1.4f;
+			Skill[SkillNum].Cost = 20;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 5:
+			Skill[SkillNum].object.Name = (char*)"분쇄한다 널!";
+			Skill[SkillNum].Damege = 1.4f;
+			Skill[SkillNum].Cost = 20;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 6:
+			Skill[SkillNum].object.Name = (char*)"삼조격";
+			Skill[SkillNum].Damege = 1.4f;
+			Skill[SkillNum].Cost = 20;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 7:
+			Skill[SkillNum].object.Name = (char*)"환영 화살";
+			Skill[SkillNum].Damege = 1.4f;
+			Skill[SkillNum].Cost = 20;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 8:
+			Skill[SkillNum].object.Name = (char*)"달빛 난무";
+			Skill[SkillNum].Damege = 1.6f;
+			Skill[SkillNum].Cost = 30;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 9:
+			Skill[SkillNum].object.Name = (char*)"다 씹어먹어주마!";
+			Skill[SkillNum].Damege = 1.6f;
+			Skill[SkillNum].Cost = 30;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 10:
+			Skill[SkillNum].object.Name = (char*)"자상 난무";
+			Skill[SkillNum].Damege = 1.6f;
+			Skill[SkillNum].Cost = 30;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 11:
+			Skill[SkillNum].object.Name = (char*)"취약점 사격";
+			Skill[SkillNum].Damege = 1.6f;
+			Skill[SkillNum].Cost = 30;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 12:
+			Skill[SkillNum].object.Name = (char*)"언리미티드 소드";
+			Skill[SkillNum].Damege = 2.0f;
+			Skill[SkillNum].Cost = 45;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 13:
+			Skill[SkillNum].object.Name = (char*)"남자는 등으로 말한다";
+			Skill[SkillNum].Damege = 2.0f;
+			Skill[SkillNum].Cost = 45;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 14:
+			Skill[SkillNum].object.Name = (char*)"극신속격";
+			Skill[SkillNum].Damege = 2.0f;
+			Skill[SkillNum].Cost = 45;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 15:
+			Skill[SkillNum].object.Name = (char*)"최종병기 활";
+			Skill[SkillNum].Damege = 2.0f;
+			Skill[SkillNum].Cost = 45;
+			Skill[SkillNum].Type = SkillNum % 4;
+		break;
+
+		case 16:
+			Skill[SkillNum].object.Name = (char*)"드레인 터치";
+			Skill[SkillNum].Damege = 0.8f;
+			Skill[SkillNum].Cost = 5;
+			Skill[SkillNum].Type = 5;
+		break;
+	}
+
 }
 
 void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory)
@@ -927,7 +1193,7 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 
 			GraveYardBackGround();
 			//던전 0 진행
-			Dungeon(Player, Enemy, Equipment, 0, 5, 0);
+			Dungeon(Player, Enemy, Equipment, 0, 5, 0,Inventory);
 
 			break;
 
@@ -936,7 +1202,7 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 
 			GraveYardBackGround();
 			//던전 0 진행
-			Dungeon(Player, Enemy, Equipment, 0, 5, 0);
+			Dungeon(Player, Enemy, Equipment, 0, 5, 0, Inventory);
 
 			break;
 		}
@@ -994,7 +1260,7 @@ void GraveYardBackGround()
 	printf_s("    $@@   $@        #      @            #@$ @           @    $@     $@@@@$        @ @                  @$               \n");
 }
 
-void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest)
+void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill)
 {
 	int iSelect = 0;
 
@@ -1004,7 +1270,7 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 
 	while(iStage == 1)
 	{
-		printf_s("어디로 갈까?\n1.모험가 길드 2.상가 3.공방지구 4.숙소 5.마을 밖으로 간다\n입력: ");
+		printf_s("어디로 갈까?\n1.모험가 길드 2.상가 3.대장간 4.훈련장 5.내 정보 6.마을 밖으로 간다\n입력: ");
 
 		scanf("%d", &iSelect);
 
@@ -1022,8 +1288,10 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 			case 3 :
 				Forge(Player, Equipment);
 				break;
-			//소지 장비 & 소지 아이템 & 현재 스텟 조회
 			case 4:
+				Training(Player, Equipment, Inventory, Skill, PlayerSkill);
+			//소지 장비 & 소지 아이템 & 현재 스텟 조회
+			case 5:
 				PlayerStatus(Player, Village);
 				for (int i = 0; i < 3; i++)
 				{
@@ -1035,7 +1303,7 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 				}
 				break;
 			//던전
-			case 5:
+			case 6:
 				DungeonEnterence(Player, Enemy, Equipment, Inventory, Quest);
 				break;
 		}
@@ -1071,7 +1339,7 @@ void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVEN
 			scanf("%d", &StageNumber);
 			if (StageNumber > 0 && StageNumber < 6)
 			{
-				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest);
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest, Inventory);
 			}
 			break;
 
@@ -1083,7 +1351,7 @@ void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVEN
 			StageNumber += 5;
 			if (StageNumber > 0 && StageNumber < 6)
 			{
-				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest);
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest, Inventory);
 			}
 			break;
 
@@ -1095,13 +1363,13 @@ void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVEN
 			StageNumber += 15;
 			if (StageNumber > 0 && StageNumber < 6)
 			{
-				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest);
+				Dungeon(Player, Enemy, Equipment, StageNumber, 5, Quest, Inventory);
 			}
 			break;
 	}
 }
 
-void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest)
+void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest, INVENTORY* Inventory)
 {
 	short Walk = 1;
 	int Loop = 0;
@@ -1143,7 +1411,7 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 
 						system("cls");
 						Status(Player, Enemy, 1);
-						Battle(Player, Enemy, 1, Quest);
+						Battle(Player, Enemy, 1, Quest, Inventory);
 
 						GraveYardBackGround();
 						printf_s("%s\n흐음 이 모습으론 마을에 가면 안 되겠군\n", Player->Name);
@@ -1168,7 +1436,7 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 					else
 					{
 						Status(Player, Enemy, EnemyIndex);
-						Battle(Player, Enemy, EnemyIndex, Quest);
+						Battle(Player, Enemy, EnemyIndex, Quest, Inventory);
 					}
 				}
 
@@ -1196,25 +1464,25 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 						case 1:
 							RandomEnemy = (rand() % 2) + 2;
 							Status(Player, Enemy, RandomEnemy);
-							Walk = Battle(Player, Enemy, RandomEnemy, Quest);
+							Walk = Battle(Player, Enemy, RandomEnemy, Quest, Inventory);
 							break;
 
 						case 2:
 							RandomEnemy = (rand() % 3) + 3;
 							Status(Player, Enemy, RandomEnemy);
-							Walk = Battle(Player, Enemy, RandomEnemy, Quest);
+							Walk = Battle(Player, Enemy, RandomEnemy, Quest, Inventory);
 							break;
 
 						case 3:
 							RandomEnemy = rand() % 3 + 6;
 							Status(Player, Enemy, RandomEnemy);
-							Walk = Battle(Player, Enemy, RandomEnemy, Quest);
+							Walk = Battle(Player, Enemy, RandomEnemy, Quest, Inventory);
 							break;
 
 						case 4:
 							RandomEnemy = rand() % 3 + 9;
 							Status(Player, Enemy, RandomEnemy);
-							Walk = Battle(Player, Enemy, RandomEnemy, Quest);
+							Walk = Battle(Player, Enemy, RandomEnemy, Quest, Inventory);
 							break;
 
 						case 5:
@@ -1226,13 +1494,13 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 							if(Loop==EventCount)
 							{
 								Status(Player, Enemy, 12);
-								Walk = Battle(Player, Enemy, 12, Quest);
+								Walk = Battle(Player, Enemy, 12, Quest, Inventory);
 							}
 
 							else
 							{
 								Status(Player, Enemy, RandomEnemy);
-								Walk = Battle(Player, Enemy, RandomEnemy, Quest);
+								Walk = Battle(Player, Enemy, RandomEnemy, Quest, Inventory);
 							}
 							break;
 					}
@@ -1569,17 +1837,52 @@ void Forge(Object* Player, EQUIPMENT* Equipment)
 
 		if (SelectParts == 1)
 		{
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < 3; i++)
 			{
-				if (Equipment[i].object.State == 1)
+				for (int j = 0; j < 4; j++)
 				{
-					Reinforce(Player, Equipment, i);
+					if (Equipment[j+(10*i)].object.State == 1)
+					{
+						Reinforce(Player, Equipment, i);
+					}
 				}
 			}
 		}
 
 		else if (SelectParts<7 && SelectParts >1)
-			Reinforce(Player, Equipment, SelectParts + 2);
+			for (int i = 0; i < 3; i++)
+			{
+				if(Equipment[(SelectParts+2)+(i*10)].object.State == 1)
+					Reinforce(Player, Equipment, SelectParts + 2);
+			}
+}
+
+void Training(Object* Player, EQUIPMENT* Equipment, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill)
+{
+	printf_s("어서오십시오. 여기는 훈련장\n");
+	Sleep(500);
+	printf_s("여기서는 스킬을 배울수 있습니다.\n");
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+
+			if (Equipment[j+(i*10)].object.State == 1)
+			{
+				switch (i % 10)
+				{
+					case 0 :
+						break;
+					case 1 :
+						break;
+					case 2 :
+						break;
+					case 3 :
+						break;
+				}
+			}
+		}
+	}
 }
 
 void Status(Object* Player, Object* Enemy, int EnemyIndex)
@@ -1599,19 +1902,19 @@ void PlayerStatus(Object* Player, int State)
 	if (State == 0)
 	{
 		printf_s("[Player] : %s\n", Player->Name);
-		printf_s("HP : %d\n", Player->Info.HP);
-		printf_s("MP : %d\n", Player->Info.MP);
+		printf_s("HP : %d/%d\n", Player->Info.HP,Player->Info.MaxHP);
+		printf_s("MP : %d/%d\n", Player->Info.MP, Player->Info.MaxMP);
 	}
 
-	else if (State ==1)
+	else if (State == 1)
 	{
 		printf_s("[Player] : %s\n", Player->Name);
-		printf_s("HP : %d\n", Player->Info.HP);
-		printf_s("MP : %d\n", Player->Info.MP);
-		printf_s("공격력 : %.2f\n", Player->Info.Att);
-		printf_s("방어력 : %.2f\n", Player->Info.Def);
+		printf_s("HP : %d/%d\n", Player->Info.HP, Player->Info.MaxHP);
+		printf_s("MP : %d/%d\n", Player->Info.MP, Player->Info.MaxMP);
+		printf_s("공격력 : %.0f\n", Player->Info.Att);
+		printf_s("방어력 : %.0f\n", Player->Info.Def);
 		printf_s("민첩 : %d\n", Player->Info.Speed);
-		printf_s("레벨 : %d\n", Player->Info.Level);
+		printf_s("모험가 등급 : %d\n", Player->Info.Level);
 		printf_s("경험치 : %d\n", Player->Info.EXP);
 		printf_s("Gold : %d\n", Player->Info.Gold);
 	}
@@ -1623,18 +1926,17 @@ void EnemyStatus(Object* Enemy, int EnemyIndex)
 	printf_s("\n%s\n", Enemy[EnemyIndex].Name);
 	printf_s("HP : %d\n", Enemy[EnemyIndex].Info.HP);
 	printf_s("MP : %d\n", Enemy[EnemyIndex].Info.MP);
-	//printf_s("공격력 : %.2f\n", Enemy[EnemyIndex].Info.Att);
-	//printf_s("방어력 : %.2f\n", Enemy[EnemyIndex].Info.Def);
-	//printf_s("레벨 : %d\n", Enemy[EnemyIndex].Info.Level);
-	//printf_s("경험치 : %d\n", Enemy[EnemyIndex].Info.EXP);
 }
 
 
-short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest)
+short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVENTORY* Inventory)
 {
 	// 전투 반복을 위한 함수
 	short Battle = 1;
 	short Defeat = 1;
+
+	int UseItem = 0;
+
 	printf_s("%s이(가) 나타났다!!\n",Enemy[EnemyIndex].Name);
 	//전투
 	while (Battle)
@@ -1648,183 +1950,236 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest)
 		switch (iChoice)
 		{
 			//공격을 선택했을 때
-		case 1:
-			//** 속도가 빠른 개체가 먼저 공격하게한다
-			if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
+			case 1:
 			{
-				PlayerAttack(Player, Enemy, EnemyIndex);
-				// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				//플레이어 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				Battle = EnemyScene(Enemy, EnemyIndex);
-
-				if (Battle == 0)
+				//** 속도가 빠른 개체가 먼저 공격하게한다
+				if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
 				{
-					for (int i = 0; i < 2; i++)
+					PlayerAttack(Player, Enemy, EnemyIndex);
+					// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					//플레이어 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					Battle = EnemyScene(Enemy, EnemyIndex);
+
+					if (Battle == 0)
 					{
-						if (Quest[i].State == 1)
+						for (int i = 0; i < 2; i++)
 						{
-							if (EnemyIndex == Quest[i].Num)
+							if (Quest[i].State == 1)
 							{
-								Enemy[EnemyIndex].State++;
+								if (EnemyIndex == Quest[i].Num)
+								{
+									Enemy[EnemyIndex].State++;
+								}
 							}
 						}
+						InitializeObjectEnemy(Enemy, EnemyIndex);
+						break;
 					}
-					InitializeObjectEnemy(Enemy, EnemyIndex);
-					break;
+
+					//플레이어 공격 후 몬스터의 공격
+					EnemyAttack(Player, Enemy, EnemyIndex);
+
+					//몬스터 공격 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					// 몬스터 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					//플레이어 죽음
+					if (Player->Info.HP <= 0)
+					{
+						printf_s("%s은(는) 바스라졌다.", Player->Name);
+						SceneState = Scene_Logo;
+						Battle = 0;
+						Sleep(1000);
+						Defeat = GameOver();
+						break;
+					}
 				}
 
-				//플레이어 공격 후 몬스터의 공격
-				EnemyAttack(Player, Enemy, EnemyIndex);
+				else if (Player->Info.Speed <= Enemy[EnemyIndex].Info.Speed)
+				{
+					//몬스터의 공격
+					EnemyAttack(Player, Enemy, EnemyIndex);
 
-				//몬스터 공격 문구를 보이기 위한 딜레이 함수
+					//몬스터 공격 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					// 몬스터 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					//플레이어 죽음
+					if (Player->Info.HP <= 0)
+					{
+						printf_s("%s은(는) 바스라졌다.\n", Player->Name);
+						SceneState = Scene_Logo;
+						Battle = 0;
+						Sleep(1000);
+						Defeat = GameOver();
+						break;
+					}
+
+					//몬스터 공격 후 플레이어 공격
+					PlayerAttack(Player, Enemy, EnemyIndex);
+					// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					//플레이어 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					Battle = EnemyScene(Enemy, EnemyIndex);
+					if (Battle == 0)
+					{
+						InitializeObjectEnemy(Enemy, EnemyIndex);
+						break;
+					}
+
+				}
+				break;
+			}
+				// **방어
+			case 2:
+			{
+				printf_s("%s은(는) 방어에 집중한다.\n",Player->Name);
+				Player->Info.Def *= 2;
 				Sleep(500);
 
-				// 몬스터 공격 후 정보창 갱신
+				EnemyAttack(Player, Enemy, EnemyIndex);
+				Sleep(500);
+
+				Player->Info.Def /= 2;
+
 				Status(Player, Enemy, EnemyIndex);
-				
-				//플레이어 죽음
+
 				if (Player->Info.HP <= 0)
 				{
-					printf_s("%s은(는) 바스라졌다.",Player->Name);
+					printf_s("%s은(는) 바스라졌다.\n", Player->Name);
 					SceneState = Scene_Logo;
 					Battle = 0;
 					Sleep(1000);
 					Defeat = GameOver();
 					break;
 				}
+				break;
 			}
-
-			else if (Player->Info.Speed <= Enemy[EnemyIndex].Info.Speed)
+				// ** 스킬
+			case 3:
 			{
-				//몬스터의 공격
-				EnemyAttack(Player, Enemy, EnemyIndex);
-
-				//몬스터 공격 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				// 몬스터 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				//플레이어 죽음
-				if (Player->Info.HP <= 0)
+				//** 속도가 빠른 개체가 먼저 공격하게한다
+				if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
 				{
-					printf_s("%s은(는) 바스라졌다.\n",Player->Name);
-					SceneState = Scene_Logo;
-					Battle = 0;
-					Sleep(1000);
-					Defeat = GameOver();
-					break;
-				}
-
-				//몬스터 공격 후 플레이어 공격
-				PlayerAttack(Player, Enemy, EnemyIndex);
-				// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				//플레이어 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				Battle = EnemyScene(Enemy, EnemyIndex);
-				if (Battle == 0)
-				{
-					InitializeObjectEnemy(Enemy, EnemyIndex);
-					break;
-				}
-
-			}
-			break;
-			// **방어
-		case 2:
-
-			break;
-			// ** 스킬
-		case 3:
-			//** 속도가 빠른 개체가 먼저 공격하게한다
-			if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
-			{
-				PlayerAttack(Player, Enemy, EnemyIndex);
-				// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				//플레이어 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				//플레이어 공격 후 몬스터의 공격
-				EnemyAttack(Player, Enemy, EnemyIndex);
-
-				//몬스터 공격 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				// 몬스터 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-			}
-
-			else if (Player->Info.Speed <= Enemy[EnemyIndex].Info.Speed)
-			{
-				//몬스터의 공격
-				EnemyAttack(Player, Enemy, EnemyIndex);
-
-				//몬스터 공격 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				// 몬스터 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				//몬스터 공격 후 플레이어 공격
-				PlayerAttack(Player, Enemy, EnemyIndex);
-				// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
-				Sleep(500);
-
-				//플레이어 공격 후 정보창 갱신
-				Status(Player, Enemy, EnemyIndex);
-
-				Battle = EnemyScene(Enemy, EnemyIndex);
-				if (Battle == 0)
-				{
-					InitializeObjectEnemy(Enemy, EnemyIndex);
-					break;
-				}
-
-			}
-			break;
-			//전투 중 아이템 사용
-		case 4:
-
-			//도망을 선택했을 때
-		case 5:
-
-			//플레이어의 Speed 가 적보다 높을 때 도망칠수 있게 함
-			if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
-			{
-				//도망도 확률로 할 수있게 함
-				//주사위 굴리는 시스템 채용
-				if (rand() % 6 > 2)
-				{
-					printf_s("%s(은)는 도망쳤다.\n", Player->Name);
-
-					//전투 종료 루프해제
-					Battle = 0;
-
-					// 도망 시 적의 정보 초기화
-					InitializeObjectEnemy(Enemy, EnemyIndex);
-
-					//도망문구를 보이기위한 딜레이
-					Sleep(500);
-				}
-
-				// 도망 실패 시
-				else
-				{
-					printf_s("%s는 도망치치 못했다.\n", Player->Name);
-
-					// 도망치지 못했을 때 문구를 보이기위한 딜레이
+					PlayerAttack(Player, Enemy, EnemyIndex);
+					// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
 					Sleep(500);
 
-					// 도망 실패 시 턴 소모로 몬스터의 공격을 받게하기위함
+					//플레이어 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					//플레이어 공격 후 몬스터의 공격
+					EnemyAttack(Player, Enemy, EnemyIndex);
+
+					//몬스터 공격 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					// 몬스터 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+				}
+
+				else if (Player->Info.Speed <= Enemy[EnemyIndex].Info.Speed)
+				{
+					//몬스터의 공격
+					EnemyAttack(Player, Enemy, EnemyIndex);
+
+					//몬스터 공격 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					// 몬스터 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					//몬스터 공격 후 플레이어 공격
+					PlayerAttack(Player, Enemy, EnemyIndex);
+					// 공격시 나타나는 문구를 보이기 위한 딜레이 함수
+					Sleep(500);
+
+					//플레이어 공격 후 정보창 갱신
+					Status(Player, Enemy, EnemyIndex);
+
+					Battle = EnemyScene(Enemy, EnemyIndex);
+					if (Battle == 0)
+					{
+						InitializeObjectEnemy(Enemy, EnemyIndex);
+						break;
+					}
+
+				}
+				break;
+			}
+				//전투 중 아이템 사용
+			case 4:
+				printf_s("아이템명\t갯수\n");
+				for (int i = 0; i < 1; i++)
+				{
+					if (Inventory[i].Equipment.Stock > 0)
+						printf_s("%d. %s\t\t%d\n", i + 1, Inventory[i].item.Object.Name, Inventory[i].Equipment.Stock);
+				}
+				printf_s("사용하실 아이템의 번호를 입력하세요\n 입력 :");
+
+				scanf("%d", &UseItem);
+
+				if (Inventory[UseItem - 1].Equipment.Stock > 0)
+				{
+					Inventory[UseItem - 1].Equipment.Stock -= 1;
+					printf_s("%s을(를) 사용했다!\n", Inventory[UseItem - 1].item.Object.Name);
+					Sleep(500);
+
+					if (Inventory[UseItem - 1].item.Effect.Info.HP > 0)
+					{
+						if (Player->Info.HP + Inventory[UseItem - 1].item.Effect.Info.HP < Player->Info.MaxHP)
+						{
+							printf_s("체력을 %d만큼 회복했다!\n", Inventory[UseItem - 1].item.Effect.Info.HP);
+							Player->Info.HP += Inventory[UseItem - 1].item.Effect.Info.HP;
+							Sleep(500);
+						}
+
+						else if (Player->Info.HP + Inventory[UseItem - 1].item.Effect.Info.HP > Player->Info.MaxHP)
+						{
+							printf_s("체력을 %d만큼 회복했다!\n", Player->Info.MaxHP - Player->Info.HP);
+							Player->Info.HP = Player->Info.MaxHP;
+							Sleep(500);
+						}
+
+						else if (Player->Info.HP == Player->Info.MaxHP)
+						{
+							printf_s("이미 체력이 가득 찬 상태입니다.\n");
+						}
+					}
+
+					else if (Inventory[UseItem - 1].item.Effect.Info.MP > 0)
+					{
+						if (Player->Info.MP + Inventory[UseItem - 1].item.Effect.Info.MP < Player->Info.MaxMP)
+						{
+							printf_s("마력을 %d만큼 회복했다!\n", Inventory[UseItem - 1].item.Effect.Info.MP);
+							Player->Info.MP += Inventory[UseItem - 1].item.Effect.Info.MP;
+							Sleep(500);
+						}
+
+						else if (Player->Info.MP + Inventory[UseItem - 1].item.Effect.Info.MP > Player->Info.MaxMP)
+						{
+							printf_s("마력을 %d만큼 회복했다!\n", Player->Info.MaxMP - Player->Info.MP);
+							Player->Info.MP = Player->Info.MaxMP;
+							Sleep(500);
+						}
+
+						else if (Player->Info.MP == Player->Info.MaxMP)
+						{
+							printf_s("이미 마력이 가득 찬 상태입니다.\n");
+						}
+					}
+
 					EnemyAttack(Player, Enemy, EnemyIndex);
 					Sleep(500);
 
@@ -1840,40 +2195,92 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest)
 						break;
 					}
 				}
-			}
 
-			else
-			{
-				printf_s("%s가 빨라 도망갈수 없다!\n", Enemy[EnemyIndex].Name);
-				Sleep(500);
+				else
+				{
+					printf_s("소지하지않거나 보유하지않은 항목입니다!\n");
+				}
+				break;
+				//도망을 선택했을 때
+			case 5:
 
+				//플레이어의 Speed 가 적보다 높을 때 도망칠수 있게 함
+				if (Player->Info.Speed > Enemy[EnemyIndex].Info.Speed)
+				{
+					//도망도 확률로 할 수있게 함
+					//주사위 굴리는 시스템 채용
+					if (rand() % 6 > 2)
+					{
+						printf_s("%s(은)는 도망쳤다.\n", Player->Name);
+
+						//전투 종료 루프해제
+						Battle = 0;
+
+						// 도망 시 적의 정보 초기화
+						InitializeObjectEnemy(Enemy, EnemyIndex);
+
+						//도망문구를 보이기위한 딜레이
+						Sleep(500);
+					}
+
+					// 도망 실패 시
+					else
+					{
+						printf_s("%s는 도망치치 못했다.\n", Player->Name);
+
+						// 도망치지 못했을 때 문구를 보이기위한 딜레이
+						Sleep(500);
+
+						// 도망 실패 시 턴 소모로 몬스터의 공격을 받게하기위함
+						EnemyAttack(Player, Enemy, EnemyIndex);
+						Sleep(500);
+
+						Status(Player, Enemy, EnemyIndex);
+
+						if (Player->Info.HP <= 0)
+						{
+							printf_s("%s은(는) 바스라졌다.\n", Player->Name);
+							SceneState = Scene_Logo;
+							Battle = 0;
+							Sleep(1000);
+							Defeat = GameOver();
+							break;
+						}
+					}
+				}
+
+				else
+				{
+					printf_s("%s가 빨라 도망갈수 없다!\n", Enemy[EnemyIndex].Name);
+					Sleep(500);
+
+					EnemyAttack(Player, Enemy, EnemyIndex);
+
+					Sleep(500);
+
+					Status(Player, Enemy, EnemyIndex);
+
+					if (Player->Info.HP <= 0)
+					{
+						printf_s("%s은(는) 바스라졌다.\n", Player->Name);
+						SceneState = Scene_Logo;
+						Battle = 0;
+						Sleep(1000);
+						Defeat = GameOver();
+						break;
+					}
+				}
+				break;
+
+				// 잘못된 입력시 턴 소모 하게 만들기 위함
+			default:
+				printf_s("잘못된 입력입니다! ");
 				EnemyAttack(Player, Enemy, EnemyIndex);
 
 				Sleep(500);
 
 				Status(Player, Enemy, EnemyIndex);
-
-				if (Player->Info.HP <= 0)
-				{
-					printf_s("%s은(는) 바스라졌다.\n", Player->Name);
-					SceneState = Scene_Logo;
-					Battle = 0;
-					Sleep(1000);
-					Defeat = GameOver();
-					break;
-				}
-			}
-			break;
-
-			// 잘못된 입력시 턴 소모 하게 만들기 위함
-		default:
-			printf_s("잘못된 입력입니다! ");
-			EnemyAttack(Player, Enemy, EnemyIndex);
-
-			Sleep(500);
-
-			Status(Player, Enemy, EnemyIndex);
-			break;
+				break;
 		}
 		
 	}
@@ -1884,19 +2291,30 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest)
 void PlayerAttack(Object* Player, Object* Enemy, int EnemyIndex)
 {
 	printf_s("%s의 공격!!\n", Player->Name);
+	Sleep(500);
 	//플레이어의 공격력과 몬스터의 방어력을 비교하여 데미지를 계산하는 조건문
 	if (Player->Info.Att > Enemy[EnemyIndex].Info.Def)
+	{
+		printf_s("%s는 %d만큼의 데미지를 받았다!\n", Enemy[EnemyIndex].Name, (int)(Player->Info.Att - Enemy[EnemyIndex].Info.Def));
 		Enemy[EnemyIndex].Info.HP -= (int)(Player->Info.Att - Enemy[EnemyIndex].Info.Def);
+	}
 	// 방어력이 더 높을 경우 최소 1의 데미지를 주려고함
 	else
+	{
+		printf_s("%s는 1만큼의 데미지를 받았다!\n", Enemy[EnemyIndex].Name);
 		Enemy[EnemyIndex].Info.HP -= 1;
+	}
 }
 
 void EnemyAttack(Object* Player, Object* Enemy, int EnemyIndex)
 {
-	printf_s("몬스터의 공격!!\n");
+	printf_s("%s의 공격!!\n", Enemy[EnemyIndex].Name);
+	Sleep(500);
 	if (Enemy[EnemyIndex].Info.Att > Player->Info.Def)
+	{
+		printf_s("%s는 %d만큼의 데미지를 입었다!\n", Player->Name, (int)Enemy[EnemyIndex].Info.Att - Player->Info.Def);
 		Player->Info.HP -= (int)(Enemy[EnemyIndex].Info.Att - Player->Info.Def);
+	}
 	else
 		Player->Info.HP -= 1;
 }
@@ -1905,8 +2323,8 @@ void Equip(Object* Player, EQUIPMENT* Equipment, int EquipmentNum)
 {
 	printf_s("%s 을(를) 얻었다!\n", Equipment[EquipmentNum].object.Name);
 
-	Player->Info.HP += Equipment[EquipmentNum].Info.HP;
-	Player->Info.MP += Equipment[EquipmentNum].Info.MP;
+	Player->Info.HP += Equipment[EquipmentNum].Info.MaxHP;
+	Player->Info.MP += Equipment[EquipmentNum].Info.MaxMP;
 	Player->Info.Att += Equipment[EquipmentNum].Info.Att;
 	Player->Info.Def += Equipment[EquipmentNum].Info.Def;
 	Player->Info.Speed += Equipment[EquipmentNum].Info.Speed;
@@ -1918,16 +2336,23 @@ void Equip(Object* Player, EQUIPMENT* Equipment, int EquipmentNum)
 void Reinforce(Object* Player, EQUIPMENT* Equipment, int EquipmentID)
 {
 	int iAgree = 0;
-
-	printf_s("%s를 강화 하겠나?\n", Equipment[EquipmentID].object.Name);
-	printf_s("%d Gold필요하네(1.예 2.아니요) : ",Equipment[EquipmentID].Info.Gold);
+	for (EquipmentID; EquipmentID < 30; EquipmentID++)
+	{
+		if (Equipment[EquipmentID].object.State == 1)
+		{
+			printf_s("%s를 강화 하겠나?\n", Equipment[EquipmentID].object.Name);
+			printf_s("%d Gold필요하네(1.예 2.아니요) : ",Equipment[EquipmentID].Info.Gold);
+		}
+	}
 	scanf(" %d", &iAgree);
 
 	if (iAgree == 1)
 	{
-		Equipment[EquipmentID].object.State = 0;
-		Equip(Player, Equipment, EquipmentID + 10);
-		Player->Info.Gold -= Equipment[EquipmentID].Info.Gold;
+		
+				Equipment[EquipmentID].object.State = 0;
+				Equip(Player, Equipment, EquipmentID + 10);
+				Player->Info.Gold -= Equipment[EquipmentID].Info.Gold;
+		
 	}
 
 }
