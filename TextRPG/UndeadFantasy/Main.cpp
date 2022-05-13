@@ -112,13 +112,14 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* 
 void EndingScene();
 
 void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill);
-void GraveYardBackGround();
+void GraveYardBackGround(int BGNum);
 void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill);
 void Castle(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 void NecromancerTower(Object* Player, Object* Enemy, EQUIPMENT* Equipment);
 
 void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill);
 void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill);
+void DungeonBackGround();
 void Shop(Object* Player, INVENTORY* Inventory);
 void ShopBackGround();
 void Guild(Object* Player, Object* Quest, Object* Enemy, EQUIPMENT* Equipment);
@@ -288,7 +289,7 @@ void SceneManager(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY
 
 void LogoScene()										//LogoScene
 {
-	int Width(120 / 2 - (strlen(" __    _____ _____ _____ ") / 2));
+	int Width = (120 / 2 - (strlen(" __    _____ _____ _____ ") / 2));
 	int Height = 5;
 
 	SetPosition(Width, Height, (char*)" __    _____ _____ _____ ");
@@ -331,6 +332,8 @@ void MenuScene()
 
 void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, Object* Quest, SKILL* Skill, PLAYERSKILL* PlayerSkill)
 {
+	int Width = 0;
+	int Height = 0;
 	// ** 모듈화 함수만들어 용도별로 사용할 수 있게
 	
 	for (int i = 0; i < sizeof(int); i++)
@@ -347,6 +350,17 @@ void StageScene(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* 
 		break;
 
 	case 1:
+		Width = (120 / 2 - (strlen(".........................................................................................................................") / 2));
+		Height = 5;
+		
+		SetPosition(Width, Height,	   (char*)".......................................................................................................................");
+		SetPosition(Width, Height + 1, (char*)"..####...#####...##..##..######..##..##..######..##..##..#####...######..#####.........######...####...##...##..##..##.");
+		SetPosition(Width, Height + 2, (char*)".##..##..##..##..##..##..##......###.##....##....##..##..##..##..##......##..##..........##....##..##..##...##..###.##.");
+		SetPosition(Width, Height + 3, (char*)".######..##..##..##..##..####....##.###....##....##..##..#####...####....#####...........##....##..##..##.#.##..##.###.");
+		SetPosition(Width, Height + 4, (char*)".##..##..##..##...####...##......##..##....##....##..##..##..##..##......##..##..........##....##..##..#######..##..##.");
+		SetPosition(Width, Height + 5, (char*)".##..##..#####.....##....######..##..##....##.....####...##..##..######..##..##..........##.....####....##.##...##..##.");
+		SetPosition(Width, Height + 6, (char*)".......................................................................................................................");
+		Sleep(2000);
 		// ** 모험가 마을
 		AdventurerVillage(Player, Enemy, Equipment, Inventory, Quest, Skill, PlayerSkill);
 		break;
@@ -427,7 +441,7 @@ void InitializeObjectEnemy(Object* Enemy, int EnemyIndex)
 		break;
 
 	case 1:
-		Enemy[EnemyIndex].Name = (char*)"신입모험가";
+		Enemy[EnemyIndex].Name = (char*)"엉성한 기사";
 		Enemy[EnemyIndex].Info.HP = 25;
 		Enemy[EnemyIndex].Info.MP = 5;
 		Enemy[EnemyIndex].Info.Att = 10;
@@ -1189,6 +1203,10 @@ void InitializeSkill(SKILL* Skill, int SkillNum)
 
 void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill)
 {
+	const int Grave = 0;
+	const int FindWeapon = 1;
+	const int Guard = 2;
+
 	int iChoice = 0;
 	int iStartWeapon = 0;
 
@@ -1213,14 +1231,14 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 
 	SetColor(15);
 
-	GraveYardBackGround();
+	GraveYardBackGround(Grave);
 
 	Player->Name = SetName();
 	Sleep(500);
 
-	GraveYardBackGround();
+	GraveYardBackGround(Grave);
 
-	//수풀 속 반짝이는 물체 이미지
+	GraveYardBackGround(FindWeapon);
 	printf_s("내가 일어난 곳에 뭔가 있는거 같다\n");
 	printf_s("1.가져간다 2.그냥 놔둔다 입력: ");
 	scanf_s("%d", &iChoice);
@@ -1228,7 +1246,7 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 	switch (iChoice)
 	{
 	case 1:
-		GraveYardBackGround();
+		GraveYardBackGround(Grave);
 
 		//시작 장비를 무작위로 부여
 		iStartWeapon = rand() % 4;
@@ -1236,12 +1254,12 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 		//장비 이미지
 		Equip(Player, Equipment, iStartWeapon);
 
-		GraveYardBackGround();
+		GraveYardBackGround(Grave);
 
 		printf_s("%s\n우선 마을로 가서 정보를 모아야겠어\n", Player->Name);
 		Sleep(1000);
 
-		GraveYardBackGround();
+		GraveYardBackGround(Grave);
 		//던전 0 진행
 		Dungeon(Player, Enemy, Equipment, 0, 5, 0, Inventory, Skill, PlayerSkill);
 
@@ -1250,71 +1268,138 @@ void GraveYard(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVENTORY* I
 	default:
 		printf_s("%s\n우선 마을로 가서 정보를 모아야겠어\n", Player->Name);
 
-		GraveYardBackGround();
+		GraveYardBackGround(Grave);
 		//던전 0 진행
 		Dungeon(Player, Enemy, Equipment, 0, 5, 0, Inventory, Skill, PlayerSkill);
 
 		break;
 	}
 
-	// 경비병 이미지
-	system("cls");
-	printf_s("경비병\n\n멈추십시오! 못 보던 분이신데...");
+	GraveYardBackGround(Guard);
+	printf_s("\n경비병\n\n멈추십시오! 못 보던 분이신데...");
 	Sleep(1000);
-	// 경비병 이미지
-	system("cls");
-	printf_s("%s\n\n ...", Player->Name);
+
+	GraveYardBackGround(Guard);
+	printf_s("\n%s\n ...", Player->Name);
 	Sleep(1000);
-	system("cls");
-	// 경비병 이미지
-	printf_s("경비병\n\n혹시 모험가가 되려고 오신겁니까?");
+
+	GraveYardBackGround(Guard);
+	printf_s("\n경비병\n\n혹시 모험가가 되려고 오신겁니까?");
 	Sleep(1000);
-	system("cls");
-	// 경비병 이미지
-	printf_s("%s\n\n 그렇다", Player->Name);
+
+	GraveYardBackGround(Guard);
+	printf_s("\n%s\n\n 그렇다", Player->Name);
 	Sleep(1000);
-	system("cls");
-	// 경비병 이미지
-	printf_s("경비병\n\n환영합니다! 이 곳은 모험가들의 마을 솜니움입니다.\n");
+
+	GraveYardBackGround(Guard);
+	printf_s("\n경비병\n\n환영합니다! 이 곳은 모험가들의 마을 솜니움입니다.\n");
 	Sleep(500);
 	printf_s("모험가가 되고싶으면 길드에 먼저 등록 하시면 됩니다.");
 	Sleep(1000);
+
 	system("cls");
 
 }
 
 //** 묘지 배경
-void GraveYardBackGround()
+void GraveYardBackGround(int BGNum)
 {
-	system("cls");
-	int Width(120 / 2 - (strlen("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWOl:;,,:odokWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM") / 2));
+	int Width = 0;
 	int Height = 0;
+	switch (BGNum)
+	{
+		case 0:
+		system("cls");
+		Width = (120 / 2 - (strlen("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWOl:;,,:odokWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM") / 2));
+		Height = 0;
 
-	SetPosition(Width, Height, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:   .lKNWxoXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 1, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc    oWMMKlkWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 2, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.   ,KMMWxlXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 3, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMN:   .xWMMKclkOOxddkXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 4, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWx'.  :XMMWd,cdxxxxlcKMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 5, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOxl'.   ;KMMMNKKNWMMMO;dWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 6, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0c,;;:cllodOXWMMMMMMMMMMW0:lNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 7, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMO.  :KWMMMMMMMMMMMWKkkkkkkkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 8, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc  .OMMMMWNKO0WMMNdo0KNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 9, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0:..;dxxdc'. .OMMWkxNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 10, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0OOKKXx.   lWMM0d0MMMMMMMMMMMMMNOkNMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 11, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc   ,KMMNdxWMMMMMWWMMMMM0::KMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 12, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.  .xWMMOdXMMMMKo:cdKWMKclXWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 13, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:   :XMMXx0MMMMXc..'oXMNxdod0NMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 14, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNOkKWMMMMMMMMMMMMMMMx.  .kMMMkxNMNK0oldkKWMXk0kl:dNMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 15, (char*)"MMMMMMMMMMMWK0KNNWMMMMMMMMMMMMMMMMMMMMMMMMMMNOl;c0WMMMMMMMMMMMMMX:   cNMMKdOXl,;;cocldOd;d0xokNMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 16, (char*)"MMMMMMMMMMMWNXNX00XWMMMMMMMMMMMMMMMMMMMMMMMNKO0O::KMWNWMMMMXOOXMWx.  .OMMWxxNOol':Oo'';ok0XWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 17, (char*)"MMMMMMMMMMMMMMMMMWNXWWWMMMMMN0KXOxxxk0WMMMMMWNKOxO0Od:xWMMMNKdckNK;   lNMM0xXWWXdo0kc;;xXXNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 18, (char*)"MMMMMMWWMMMMMMMMMWNNW0odXWWXd',ccclox0NMWNXWMWKO0Oo;,.cNN0XWWXx:cd:.  '0MMNxlxO0d:lol:ldocoONMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-	SetPosition(Width, Height + 19, (char*)"MMMMMMXkk0KNWMMMNOxOOdcl0Kkkx,.;xkdc;cldOd:d0Oxkxc,;:.:KOdkOOxoc,;:.   oWMMOlc'cc.',,;xXXXXXXXNWWWMWNNWMMMMWMMMMMMMMMMMM");
-	SetPosition(Width, Height + 20, (char*)"MMMMMMMNXXK0Okkkdllc,':oxxol;'':xXOl';oodo,':codccc,',:o;..;oxkd:;c,.  ,KMMKdl,..cl,:::oocoxolloxKW0k00KNWKkKMMMMWNNMMMM");
-	SetPosition(Width, Height + 21, (char*)"MMMWNNWWKxdkkl;;ok0Kxl:coll:',okxo'...'''..  .coc:cldxc'..,ccoOk:ckc.. .xMMWd..  :::;.',';kXXX00XXK0XWN0xkkx0KKOxxdk00WM");
-	SetPosition(Width, Height + 22, (char*)"WWWNxOXOdc:coolxXNOkdol::;c;.....          .'',:c:;,oOlcl;:oddo:';Ok,'. lNMMO....,''',,..,:;lkddddkOOkddllxdlc:;'coxdxKN");
-	SetPosition(Width, Height + 23, (char*)"kxKNKkxlodxO0Oocdo'                            .',,,'::;,,lxOO:';oKKc.. ;KMMNl'..::',,'.....':;.'lloc::;;,..,,:,,dxkXWMM");
-	SetPosition(Width, Height + 24, (char*)"------------------------------------------------------------------------------------------------------------------------");
+		SetPosition(Width, Height, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:   .lKNWxoXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 1, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc    oWMMKlkWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 2, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.   ,KMMWxlXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 3, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMN:   .xWMMKclkOOxddkXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 4, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWx'.  :XMMWd,cdxxxxlcKMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 5, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOxl'.   ;KMMMNKKNWMMMO;dWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 6, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0c,;;:cllodOXWMMMMMMMMMMW0:lNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 7, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMO.  :KWMMMMMMMMMMMWKkkkkkkkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 8, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc  .OMMMMWNKO0WMMNdo0KNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 9, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0:..;dxxdc'. .OMMWkxNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 10, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0OOKKXx.   lWMM0d0MMMMMMMMMMMMMNOkNMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 11, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNc   ,KMMNdxWMMMMMWWMMMMM0::KMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 12, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.  .xWMMOdXMMMMKo:cdKWMKclXWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 13, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:   :XMMXx0MMMMXc..'oXMNxdod0NMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 14, (char*)"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNOkKWMMMMMMMMMMMMMMMx.  .kMMMkxNMNK0oldkKWMXk0kl:dNMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 15, (char*)"MMMMMMMMMMMWK0KNNWMMMMMMMMMMMMMMMMMMMMMMMMMMNOl;c0WMMMMMMMMMMMMMX:   cNMMKdOXl,;;cocldOd;d0xokNMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 16, (char*)"MMMMMMMMMMMWNXNX00XWMMMMMMMMMMMMMMMMMMMMMMMNKO0O::KMWNWMMMMXOOXMWx.  .OMMWxxNOol':Oo'';ok0XWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 17, (char*)"MMMMMMMMMMMMMMMMMWNXWWWMMMMMN0KXOxxxk0WMMMMMWNKOxO0Od:xWMMMNKdckNK;   lNMM0xXWWXdo0kc;;xXXNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 18, (char*)"MMMMMMWWMMMMMMMMMWNNW0odXWWXd',ccclox0NMWNXWMWKO0Oo;,.cNN0XWWXx:cd:.  '0MMNxlxO0d:lol:ldocoONMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		SetPosition(Width, Height + 19, (char*)"MMMMMMXkk0KNWMMMNOxOOdcl0Kkkx,.;xkdc;cldOd:d0Oxkxc,;:.:KOdkOOxoc,;:.   oWMMOlc'cc.',,;xXXXXXXXNWWWMWNNWMMMMWMMMMMMMMMMMM");
+		SetPosition(Width, Height + 20, (char*)"MMMMMMMNXXK0Okkkdllc,':oxxol;'':xXOl';oodo,':codccc,',:o;..;oxkd:;c,.  ,KMMKdl,..cl,:::oocoxolloxKW0k00KNWKkKMMMMWNNMMMM");
+		SetPosition(Width, Height + 21, (char*)"MMMWNNWWKxdkkl;;ok0Kxl:coll:',okxo'...'''..  .coc:cldxc'..,ccoOk:ckc.. .xMMWd..  :::;.',';kXXX00XXK0XWN0xkkx0KKOxxdk00WM");
+		SetPosition(Width, Height + 22, (char*)"WWWNxOXOdc:coolxXNOkdol::;c;.....          .'',:c:;,oOlcl;:oddo:';Ok,'. lNMMO....,''',,..,:;lkddddkOOkddllxdlc:;'coxdxKN");
+		SetPosition(Width, Height + 23, (char*)"kxKNKkxlodxO0Oocdo'                            .',,,'::;,,lxOO:';oKKc.. ;KMMNl'..::',,'.....':;.'lloc::;;,..,,:,,dxkXWMM");
+		SetPosition(Width, Height + 24, (char*)"------------------------------------------------------------------------------------------------------------------------");
+		break;
+
+		case 1:
+			system("cls");
+			Width = (120 / 2 - (strlen("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@") / 2));
+			Height = 0;
+
+			SetPosition(Width, Height, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			SetPosition(Width, Height + 1, (char*)"@@@@@@@@@@@@@@@@@@@@ @@@ @@@@@@@@@@@@@ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			SetPosition(Width, Height + 2, (char*)"@@@@@@@@@@@@@@@@@@@@@  @ @@@@@@@@@@@@@   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			SetPosition(Width, Height + 3, (char*)" @@@@@@@@@@@@@@@@@@@@@@  @ @@@@@@@@@ @@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     @@@@@@@@@@@@@@@@@@@@@  @@@@@@");
+			SetPosition(Width, Height + 4, (char*)"  @@@@@@@@@@@@@@@@@@@@@   @  @@@@@@  @@@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@  @@@@@");
+			SetPosition(Width, Height + 5, (char*)"   @@@@@@@@@@@@@@@@@@@@   @    @@@  @@@@@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@       @@@@@@@@@@ @@@@@@@ @@@@@@  @@@@");
+			SetPosition(Width, Height + 6, (char*)"   @@@@@@@@@@@@@@@@@@@    @     @@  @@@@@     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@       @@@@@@@@@@  @@@@@@  @@@@@@   @@@");
+			SetPosition(Width, Height + 7, (char*)"   @@@@@@ @@@@@@@@@@@@    @     @@  @@@@@@     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      @@@@@@@@@@@ @@@@@@  @@@@@@@@   @@");
+			SetPosition(Width, Height + 8, (char*)"    @@@@ @@@@@@@  @@@@     @   @    @@@@@@     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      @@@@@@@@@ @  @  @@@  @@@@@@@@   @@");
+			SetPosition(Width, Height + 9, (char*)"    @@@  @@@@@@@  @@@      @  @     @ @@@@@     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        @@@@@@@@@@   @     @@@@@@@@@@   @@");
+			SetPosition(Width, Height + 10, (char*)"    @   @@@@@@@@   @@       @@@    @   @@@@     @@@@@@@@@@@@@ @@@@@@@@@@@@@@@        @@@@@@@@@@@  @@@      @@@@@@@@    @");
+			SetPosition(Width, Height + 11, (char*)"   @    @@@@@@@    @        @      @    @@@      @@@@@@@@@ @@ @@ @@@@@@@@@@@        @  @@@@@@@@@  @@@@@     @@@@@@@    @");
+			SetPosition(Width, Height + 12, (char*)"   @   @@@@@@@@     @       @      @      @      @@@@@@@@@@     @@@@@@@@@@@        @    @@@@@@@@  @@@@ @    @@@@@@@     ");
+			SetPosition(Width, Height + 13, (char*)"  @    @@@@@@@      @      @       @      @      @@@@@@@@@       @@@@@@@@@@       @      @@@@@@   @@@@  @    @@@@@      ");
+			SetPosition(Width, Height + 14, (char*)" @      @@@@@@      @      @      @       @       @@@@@@@@@     @@@@@@@@@@        @       @@@@@   @@@@  @    @@@@@      ");
+			SetPosition(Width, Height + 15, (char*)" @       @@@@        @    @       @       @       @@@@@@@@ @@ @@ @@@@@@@@@       @@        @@@   @@@@    @    @@@@      ");
+			SetPosition(Width, Height + 16, (char*)"@         @@         @    @        @     @        @@@@@@@@@@@ @@@@@@@@@@@        @@        @@    @@@@    @    @@@@      ");
+			SetPosition(Width, Height + 17, (char*)"          @          @    @        @     @        @@@@@@@@@@@@@@@@@@@@@@@       @@@@        @    @@@@    @    @@@       ");
+			SetPosition(Width, Height + 18, (char*)"          @          @   @          @   @          @@@@@@@@@@@@@@@@@@@@@        @@@@       @@    @@@      @    @@       ");
+			SetPosition(Width, Height + 19, (char*)"         @          @    @           @ @           @@@@@@@@@@@@@@@@@@@@@         @@@@       @     @@      @    @@       ");
+			SetPosition(Width, Height + 20, (char*)"------------------------------------------------------------------------------------------------------------------------");
+			break;
+
+		case 2:
+			system("cls");
+			Width = (120 / 2 - (strlen("            @            ") / 2));
+			Height = 0;
+
+			SetPosition(Width, Height, (char*)"            @            ");
+			SetPosition(Width, Height + 1, (char*)"            @            ");
+			SetPosition(Width, Height + 2, (char*)"  @@,       @            ");
+			SetPosition(Width, Height + 3, (char*)" @@.@*      @            ");
+			SetPosition(Width, Height + 4, (char*)"@@@  @  @@@@@            ");
+			SetPosition(Width, Height + 5, (char*)"@@ @:@@@@@@@@            ");
+			SetPosition(Width, Height + 6, (char*)"@@    @@@@@@@            ");
+			SetPosition(Width, Height + 7, (char*)" @@@;@@@@@@@@      ;;    ");
+			SetPosition(Width, Height + 8, (char*)" .@@@@@@@@@@@    @@@@@@  ");
+			SetPosition(Width, Height + 9, (char*)"   @@@=    @@     @@@-   ");
+			SetPosition(Width, Height + 10, (char*)"            @      @@    ");
+			SetPosition(Width, Height + 11, (char*)"            @     .@@.   ");
+			SetPosition(Width, Height + 12, (char*)"            @  ;@@@@@@@: ");
+			SetPosition(Width, Height + 13, (char*)"            @@@@@@@@@@@@ ");
+			SetPosition(Width, Height + 14, (char*)"            @    =@@@@@@ ");
+			SetPosition(Width, Height + 15, (char*)"            @     @@@. @@");
+			SetPosition(Width, Height + 16, (char*)"            @     @@@  @@");
+			SetPosition(Width, Height + 17, (char*)"            @    #@@@@  @");
+			SetPosition(Width, Height + 18, (char*)"            @    @@@@@.  ");
+			SetPosition(Width, Height + 19, (char*)"            @    @@ $@   ");
+			SetPosition(Width, Height + 20, (char*)"            @    @   @   ");
+			SetPosition(Width, Height + 21, (char*)"            @    @   @   ");
+			SetPosition(Width, Height + 22, (char*)"            @   :-   ~@  ");
+			SetPosition(Width, Height + 23, (char*)"            @   @     @  ");
+			SetPosition(Width, Height + 24, (char*)"            @  @@     @@ ");
+			break;
+	}
 	
 }
 
@@ -1322,9 +1407,7 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 {
 	int iSelect = 0;
 
-	int Village = 1;
-
-	Player->Name = SetName();
+	const int Village = 1;
 
 	while (iStage == 1)
 	{
@@ -1356,7 +1439,7 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 				for (int j = 0; j < 10; j++)
 				{
 					if (Equipment[j + (i * 10)].object.State == 1)
-						printf_s("%s", Equipment[j + (i * 10)].object.Name);
+						printf_s("%s\t", Equipment[j + (i * 10)].object.Name);
 				}
 			}
 			break;
@@ -1370,7 +1453,31 @@ void AdventurerVillage(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVE
 
 void AdventurerVillageBackGround()
 {
+	int Width = 0;
+	int Height = 0;
+	
 
+	system("cls");
+	Width = (120 / 2 - (strlen("            ~~                              -.                                     ..               ") / 2));
+	Height = 0;
+	SetPosition(Width, Height, (char*)"            ~~                              -.                                     ..               ");
+	SetPosition(Width, Height + 1, (char*)"          --  *                            =.-           *$~     *:               -  ~              ");
+	SetPosition(Width, Height + 1, (char*)"         .,,   -             ,~--,.       !!  ::        ;.=#:   =##==#!:~        --   ,~            ");
+	SetPosition(Width, Height + 1, (char*)"        .;  ~  ..         .-,,     =.    :     ~.~     -..,*#. ~!-#*;!:,-=         .;               ");
+	SetPosition(Width, Height + 1, (char*)"        =  ,     :         :,     ~.*-  --.-.~   ;,    .~!!=#.,$;~-=*~~:=#-     ,   .    .          ");
+	SetPosition(Width, Height + 1, (char*)"        =     ;  ,:   .-. ,~     ~   ;- ~:~ ,  -. *      ,: = ;=~, :;!*==*$    !  ~                 ");
+	SetPosition(Width, Height + 1, (char*)"        ,-, !:*  ,,   ;~-.:;!=$$$     .:,,. .,!,  !    . .,;$ .;   :;-~~,.:    .  ~!~.;  .          ");
+	SetPosition(Width, Height + 1, (char*)"         ::-:.~: ~    *## ~        =:  ,!. !:;,. !     ,   !#.,:!*;:$;:::~~    ~ ~;!=:-.:           ");
+	SetPosition(Width, Height + 1, (char*)"          ,$;~-=**    :$* .        #*   ~.!.~~.==;     ,  .*#.,:!;#:=    .-    . *,-$ ~;            ");
+	SetPosition(Width, Height + 1, (char*)"         ~-~*: .~~~~--;$=  ,-    ,,#= : ,~;,:.,. .     ,  .;#.-*=!$:=,  .~-  ~  .~,-~: ,,           ");
+	SetPosition(Width, Height + 1, (char*)"         :;~*:~~~:~:;- .- .;--;::!=**!:=**=:~~!;;;     ,  !*#*,  !*;~!,..:   *   , ,;*              ");
+	SetPosition(Width, Height + 1, (char*)"         !  ,  .   !~.-:*;:;:**  .= ,~~-,-*-,:...!     *$$#$~   .! --!;:!::~~=:~-:--!=~~            ");
+	SetPosition(Width, Height + 1, (char*)"        .-     -.,~!=-;==~-,=.,. .=  .,~,--~.,..,:.:-~:        ::- -:-~~:;=~;==~;;;-;=::-           ");
+	SetPosition(Width, Height + 1, (char*)"                             ,                        ~;-*=-,.                                      ");
+	SetPosition(Width, Height + 1, (char*)"                                        .::~    .,,,.                                               ");
+	SetPosition(Width, Height + 1, (char*)"                                       ~- ,                                                         ");
+	SetPosition(Width, Height + 1, (char*)"                                            ,                                                       ");
+	SetPosition(Width, Height + 1, (char*)"                           .,-,.         ,~~                                                        ");
 }
 
 void Castle(Object* Player, Object* Enemy, EQUIPMENT* Equipment)
@@ -1434,6 +1541,7 @@ void DungeonEnterence(Object* Player, Object* Enemy, EQUIPMENT* Equipment, INVEN
 
 void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex, int EventCount, Object* Quest, INVENTORY* Inventory, SKILL* Skill, PLAYERSKILL* PlayerSkill)
 {
+	const int Grave = 0;
 	short Walk = 1;
 	int Loop = 0;
 
@@ -1451,8 +1559,8 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 			if (Loop < EventCount)
 			{
 				system("cls");
-				GraveYardBackGround();
 
+				DungeonBackGround();
 				for (int i = 0; i < 3; i++)
 				{
 					printf(".");
@@ -1462,31 +1570,29 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 				++Loop;
 
 				//적 조우
-				//** 3번째 조우는 시민
+			
 				if (Loop == 3)
 				{
 					Status(Player, Enemy, 1);
 
-					printf_s("%s\n으아아! 왜 이런 곳에 스켈레톤이?!\n", Enemy[1].Name);
+					printf_s("%s\n멈춰라! 묘지를 서성이다니 수상한 녀석이군\n", Enemy[1].Name);
+					Sleep(500);
+					printf_s("가진 것을 다 내놓으면 모른척 해줄 수 있다!\n");
 					Sleep(1000);
 
 					system("cls");
 					Status(Player, Enemy, 1);
 					Battle(Player, Enemy, 1, Quest, Inventory, Skill, PlayerSkill);
 
-					GraveYardBackGround();
-					printf_s("%s\n흐음 이 모습으론 마을에 가면 안 되겠군\n", Player->Name);
-					Sleep(1000);
-
-					GraveYardBackGround();
-
-					printf_s("%s\n미안하지만 빌리도록 하지\n", Player->Name);
+					DungeonBackGround();
+					printf_s("%s\n흐음 이 녀석 약하네..\n", Player->Name);
 					Sleep(500);
-					printf_s("기사의 무덤으로 보이는 곳을 파냈다.");
+					printf_s("기사인 줄 알았는데 그냥 갑옷을 주워서 행세를 했을뿐인가..\n");
+					Sleep(500);
+					printf_s("내가 잘 써주지\n");
 					Sleep(1000);
 
-					GraveYardBackGround();
-
+					DungeonBackGround();
 					//초기 방어구
 					for (int i = 4; i < 9; i++)
 					{
@@ -1574,6 +1680,41 @@ void Dungeon(Object* Player, Object* Enemy, EQUIPMENT* Equipment, int EnemyIndex
 		}
 		}
 	}
+
+}
+
+void DungeonBackGround()
+{
+	system("cls");
+	int Width = (120 / 2 - (strlen("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@!!@@@@@@@@@@@@@@@@@@@ * @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@") / 2));
+	int Height = 0;
+
+	SetPosition(Width, Height, (char*)    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@!!@@@@@@@@@@@@@@@@@@@ * @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 1, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@:                #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 2, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*               =@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 3, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-             ,$@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 4, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@!@@@@@@@@@=             ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 5, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-.-,!#,@#~-!           -#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 6, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-                      ~@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 7, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-                     ,@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 8, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-                     !:-$@@*@@=@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 9, (char*)"~*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-                     -  ~@~,$!=@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 10, (char*)" ~!=@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@:                         .  . #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 11, (char*)" -:*@.@@@@@@@@@@@@@@@@@@@@;@@@@@@@@@@@@@@@@$                              #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.", 2);
+	SetPosition(Width, Height + 12, (char*)"   , .@:-@#-@@@@@@@@@@@~*# ~#@@@@@@@@@@@@@@@.                             #@@@@@@@@@@@$$#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@~", 2);
+	SetPosition(Width, Height + 13, (char*)"     .=  #;.*@#:@@@@@@@- ;  ~@@@@@@@@@@@@@@@.                            :@@@@@@@@@@@*,-=!@@@@@@@@@@@@@@@@@@@@@@@@@@@@!", 2);
+	SetPosition(Width, Height + 14, (char*)"      ,  #  ;$-.@@@@@@@~     #@@@@@@@@@@@@@@.                            =@@@@@@@@@@@!  ; @;@!@@!@@@@@@@@@@@@@@@@@@@@@.", 2);
+	SetPosition(Width, Height + 15, (char*)"         .   . .@@@@@@@$     #@@@@@@@@@@@@@@.                            =@@@@@@@@@@@#    .-@-##~@@@@@@@@#-$:$@@@@@@@@.", 2);
+	SetPosition(Width, Height + 16, (char*)"               .@@@@@@@@.    #@@@@@@@@@@@@@@,                            =@@@@@@@@@@@#        ~$ ;@.@@@@@# .  @@@@@@@@.", 2);
+	SetPosition(Width, Height + 17, (char*)"               :@@@@@@@@.,---@@@@@@@@@@@@@@@@@@@$=================$@@@@@@@@@@@@@@@@@@@---------, ~, @@@@@@,   @@@@@@@@.", 2);
+	SetPosition(Width, Height + 18, (char*)"               =@@@@@@@@!$@@@@@@@@@@@@@@@@@@@@@@-                 -@@@@@@@@@@@@@@@@@@@@@@@@@@@@=!;;;@@@@@@=  ~@@@@@@@@.", 2);
+	SetPosition(Width, Height + 19, (char*)"           .;**@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@$                 .*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*;#@@@@@@@@~", 2);
+	SetPosition(Width, Height + 20, (char*)"       ~$###@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.                 ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@$", 2);
+	SetPosition(Width, Height + 21, (char*)"  ..$@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.                 ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 22, (char*)"-;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.                .*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 23, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*                 :@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 24, (char*)"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-                .#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", 2);
+	SetPosition(Width, Height + 25, (char*)"-----------------------------------------------------------------------------------------------------------------------", 2);
 
 }
 
@@ -2157,7 +2298,21 @@ void PlayerStatus(Object* Player, int State)
 	if (State == 0)
 	{
 		printf_s("[Player] : %s\n", Player->Name);
-		printf_s("HP : %d/%d\n", Player->Info.HP, Player->Info.MaxHP);
+		printf_s("HP : %d/%d\t[", Player->Info.HP, Player->Info.MaxHP);
+		for (int i = 0; i < 10; i++)
+		{
+			if (Player->Info.HP >= (Player->Info.MaxHP / 10) * i + 1)
+			{
+				printf_s("■");
+			}
+
+			else
+			{
+				printf("□");
+			}
+		}
+		printf("]\n");
+
 		printf_s("MP : %d/%d\n", Player->Info.MP, Player->Info.MaxMP);
 	}
 
@@ -2224,13 +2379,16 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 
 				if (Battle == 0)
 				{
-					for (int i = 0; i < 4; i++)
+					if (iStage > 0)
 					{
-						if (Quest[i].State == 1)
+						for (int i = 0; i < 4; i++)
 						{
-							if (EnemyIndex == Quest[i].Num)
+							if (Quest[i].State == 1)
 							{
-								Enemy[EnemyIndex].State++;
+								if (EnemyIndex == Quest[i].Num)
+								{
+									Enemy[EnemyIndex].State++;
+								}
 							}
 						}
 					}
@@ -2293,13 +2451,16 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 
 				if (Battle == 0)
 				{
-					for (int i = 0; i < 4; i++)
+					if (iStage > 0)
 					{
-						if (Quest[i].State == 1)
+						for (int i = 0; i < 4; i++)
 						{
-							if (EnemyIndex == Quest[i].Num)
+							if (Quest[i].State == 1)
 							{
-								Enemy[EnemyIndex].State++;
+								if (EnemyIndex == Quest[i].Num)
+								{
+									Enemy[EnemyIndex].State++;
+								}
 							}
 						}
 					}
@@ -2380,6 +2541,19 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 							Battle = EnemyScene(Enemy, EnemyIndex);
 							if (Battle == 0)
 							{
+								if (iStage > 0)
+								{
+									for (int i = 0; i < 4; i++)
+									{
+										if (Quest[i].State == 1)
+										{
+											if (EnemyIndex == Quest[i].Num)
+											{
+												Enemy[EnemyIndex].State++;
+											}
+										}
+									}
+								}
 								InitializeObjectEnemy(Enemy, EnemyIndex);
 								break;
 							}
@@ -2421,6 +2595,19 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 							Battle = EnemyScene(Enemy, EnemyIndex);
 							if (Battle == 0)
 							{
+								if (iStage > 0)
+								{
+									for (int i = 0; i < 4; i++)
+									{
+										if (Quest[i].State == 1)
+										{
+											if (EnemyIndex == Quest[i].Num)
+											{
+												Enemy[EnemyIndex].State++;
+											}
+										}
+									}
+								}
 								InitializeObjectEnemy(Enemy, EnemyIndex);
 								break;
 							}
@@ -2463,6 +2650,19 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 							Battle = EnemyScene(Enemy, EnemyIndex);
 							if (Battle == 0)
 							{
+								if (iStage > 0)
+								{
+									for (int i = 0; i < 4; i++)
+									{
+										if (Quest[i].State == 1)
+										{
+											if (EnemyIndex == Quest[i].Num)
+											{
+												Enemy[EnemyIndex].State++;
+											}
+										}
+									}
+								}
 								InitializeObjectEnemy(Enemy, EnemyIndex);
 								break;
 							}
@@ -2506,6 +2706,19 @@ short Battle(Object* Player, Object* Enemy, int EnemyIndex, Object* Quest, INVEN
 							Battle = EnemyScene(Enemy, EnemyIndex);
 							if (Battle == 0)
 							{
+								if (iStage > 0)
+								{
+									for (int i = 0; i < 4; i++)
+									{
+										if (Quest[i].State == 1)
+										{
+											if (EnemyIndex == Quest[i].Num)
+											{
+												Enemy[EnemyIndex].State++;
+											}
+										}
+									}
+								}
 								InitializeObjectEnemy(Enemy, EnemyIndex);
 								break;
 							}
